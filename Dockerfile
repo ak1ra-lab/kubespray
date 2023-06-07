@@ -8,12 +8,15 @@ ENV LANG=C.UTF-8 \
     DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1
 WORKDIR /kubespray
-COPY *yml .
+COPY *.yml ./
+COPY *.cfg ./
 COPY roles ./roles
 COPY contrib ./contrib
 COPY inventory ./inventory
 COPY library ./library
 COPY extra_playbooks ./extra_playbooks
+COPY playbooks ./playbooks
+COPY plugins ./plugins
 
 RUN apt update -q \
     && apt install -yq --no-install-recommends \
@@ -38,4 +41,4 @@ RUN apt update -q \
     && echo $(curl -L https://dl.k8s.io/release/$KUBE_VERSION/bin/linux/$(dpkg --print-architecture)/kubectl.sha256) /usr/local/bin/kubectl | sha256sum --check \
     && chmod a+x /usr/local/bin/kubectl \
     && rm -rf /var/lib/apt/lists/* /var/log/* \
-    && find / -type d -name '*__pycache__' -prune -exec rm -rf {} \;
+    && find /usr -type d -name '*__pycache__' -prune -exec rm -rf {} \;
