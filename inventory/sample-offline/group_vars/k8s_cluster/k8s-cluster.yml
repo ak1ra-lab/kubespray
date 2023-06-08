@@ -73,12 +73,12 @@ kube_network_plugin: calico
 kube_network_plugin_multus: false
 
 # Kubernetes internal network for services, unused block of space.
-kube_service_addresses: 10.240.0.0/16
+kube_service_addresses: 10.240.128.0/17
 
 # internal network. When used, it will assign IP
 # addresses from this range to individual pods.
 # This network must be unused in your network infrastructure!
-kube_pods_subnet: 10.241.0.0/18
+kube_pods_subnet: 10.240.0.0/17
 
 # internal network node size allocation (optional). This is the size allocated
 # to each node for pod IP address allocation. Note that the number of pods per node is
@@ -253,11 +253,11 @@ podsecuritypolicy_enabled: false
 # podsecuritypolicy_privileged_spec: {}
 
 # Make a copy of kubeconfig on the host that runs Ansible in {{ inventory_dir }}/artifacts
-# kubeconfig_localhost: false
+kubeconfig_localhost: true
 # Use ansible_host as external api ip when copying over kubeconfig.
 # kubeconfig_localhost_ansible_host: false
 # Download kubectl onto the host that runs Ansible in {{ bin_dir }}
-# kubectl_localhost: false
+kubectl_localhost: true
 
 # A comma separated list of levels of node allocatable enforcement to be enforced by kubelet.
 # Acceptable options are 'pods', 'system-reserved', 'kube-reserved' and ''. Default is "".
