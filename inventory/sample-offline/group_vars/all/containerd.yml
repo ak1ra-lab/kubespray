@@ -35,9 +35,8 @@
 ## example define mirror.registry.io or 172.19.16.11:5000
 ## set "name": "url". insecure url must be started http://
 ## Port number is also needed if the default HTTPS port is not used.
-# containerd_insecure_registries:
-#   "localhost": "http://127.0.0.1"
-#   "172.19.16.11:5000": "http://172.19.16.11:5000"
+containerd_insecure_registries:
+  "{{ registry_host }}": "http://{{ registry_host }}"
 
 # containerd_registries:
 #   "docker.io": "https://registry-1.docker.io"
