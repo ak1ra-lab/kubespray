@@ -1,3 +1,6 @@
 images/
 nginx/
 registry/
+compose.yaml
+files.list
+images.list

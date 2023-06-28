@@ -2,10 +2,11 @@
 # This script is used by GitHub Actions
 # Before running this script, you should have a running registry:2 container
 #   resources/
-#     registry/    ->    temp/images.list
-#     nginx/
-#       files/     ->    temp/files.list
-#       images/    ->    extra docker-archive tar ball
+#     registry/        ->    downloaded images from temp/images.list in registry:2 format
+#     nginx/files/     ->    downloaded files from temp/files.list
+#     nginx/images/    ->    extra nginx and registry in docker-archive format
+#     nginx.conf       ->    nginx.conf for files server
+#     setup.sh         ->    helper script to setup and start nginx, registry containers
 
 ARCH=${ARCH:-amd64}
 REGISTRY_NAME="${REGISTRY_NAME:-registry}"
@@ -46,7 +47,9 @@ function download_files_list() {
 
     echo "==== download_files_list ===="
     cat "${FILES_LIST}" && cp -v "${FILES_LIST}" "${RESOURCES_DIR}"
-    wget -q -c -x -P "${OFFLINE_FILES_DIR}" -i "${FILES_LIST}"
+    wget \
+        --quiet --continue --force-directories \
+        --directory-prefix="${OFFLINE_FILES_DIR}" --input-file="${FILES_LIST}"
 }
 
 function download_images_list() {
@@ -78,8 +81,14 @@ function download_extra_images() {
     skopeo copy "docker://${EXTRA_REGISTRY_IMAGE}" "docker-archive:${EXTRA_IMAGES_DIR}/registry.tar:${EXTRA_REGISTRY_IMAGE}"
 }
 
+function download_kubespray_source() {
+    wget \
+        --output-document=${RESOURCES_DIR}/kubespray-offline.tar.gz \
+        --continue https://github.com/ak1ra-lab/kubespray/archive/refs/heads/offline.tar.gz
+}
+
 function gen_compose_yaml() {
-    cat > ${RESOURCES_DIR}/compose.yaml<<EOF
+    cat >${RESOURCES_DIR}/compose.yaml <<EOF
 ---
 version: '3'
 services:
@@ -107,4 +116,5 @@ EOF
 download_files_list
 download_images_list
 download_extra_images
+download_kubespray_source
 gen_compose_yaml
