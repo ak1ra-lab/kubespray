@@ -5,7 +5,7 @@
 
 本目录为使用 kubespray "半离线化"部署 Kubernetes 集群方案所需文件.
 
-因为没有把操作系统软件源部分也"离线化", 因此称之为"半离线化", 因此待安装节点并不能全程断网安装. 但是除此之外, 使用 kubespray 过程中所需要的文件和镜像已经全部包含, 缺少的部分只是操作系统软件源, 想要完全"离线化"部署, 可以参考 [k8sli/kubeplay](https://github.com/k8sli/kubeplay) 项目, 本项目正是在这个项目启发下开发, 使用 GitHub Actions 来下载必要的文件.
+因为没有把操作系统软件源部分也"离线化", 因此称之为"半离线化", 待安装节点并不能全程断网安装. 但是除此之外, 使用 kubespray 过程中所需要的文件和镜像已经全部包含, 缺少的部分只是操作系统软件源, 想要完全"离线化"部署, 可以参考 [k8sli/kubeplay](https://github.com/k8sli/kubeplay) 项目, 本项目正是在这个项目启发下开发, 使用 GitHub Actions 来下载必要的文件.
 
 项目相关文件如下,
 
@@ -22,7 +22,7 @@
         * 会下载 [ak1ra-lab/kubespray offline 分支](https://github.com/ak1ra-lab/kubespray/tree/offline)的代码
     * 打包后包含 `compose.yaml`, `nginx.conf`, `setup.sh` 等文件
 
-打包后离线安装资源的目录结构,
+打包后离线安装包的目录结构为,
 
 ```
 kubespray-offline/
@@ -39,43 +39,48 @@ kubespray-offline/
 
 准备一台部署用的 服务器/虚拟机, 推荐使用 Debian 11 (bullseye),
 
-* 使用系统包管理器安装 `python3 python3-pip python3-venv`
+* 使用系统包管理器安装 `python3 python3-pip python3-venv jq`
 * 这台服务器会用作 kubespray 的控制节点用于安装 Kubernetes 集群
 * 托管离线资源的 nginx 与 registry 容器也会运行在这台服务器上
     * nginx 容器默认监听 8080 端口, registry 容器默认监听 5000 端口,
     * 要求这两个端口不能被占用, 因此最好在一台全新的服务器上操作
 
-在 [ak1ra-lab/kubespray releases](https://github.com/ak1ra-lab/kubespray/releases) 页面下载离线安装资源
+在 [ak1ra-lab/kubespray releases](https://github.com/ak1ra-lab/kubespray/releases) 页面下载离线安装包,
 
-* 由于 GitHub Actions 对单文件大小的限制, 离线安装资源被做成多个分卷, 根据待安装集群节点的 CPU 架构下载对应架构的所有分卷, 目前支持 `amd64` 与 `arm64`
+* 由于 GitHub Actions 对单文件大小的限制, 离线安装包被做成多个分卷,
+    * 根据待安装集群节点的 CPU 架构下载对应架构的所有分卷, 目前支持 `amd64` 与 `arm64`
 * 下载好后将所有分卷使用 `cat` 命令合并为一个文件
-* 校验合并后文件的 checksum, 校验通过后解压离线安装文件
-* 切换到解压后的目录 `resources/`, 执行该目录下的 `setup.sh` 脚本,
+* 校验合并后文件的 `sha256sum`, 校验通过后解压离线安装包
+* 切换到解压后的目录, 执行本目录下的 `setup.sh` 脚本,
     * 会解压安装 `nerdctl-full-*` 至 `/usr/local` 目录
     * 启动 `buildkit` 与 `containerd` 服务并设置开机启动
     * 使用 `nerdctl image load` 导入 nginx 与 registry 镜像
     * 使用 `nerdctl compose -f compose.yaml up -d` 启动 nginx 与 registry 服务
 
-当前构建的版本为 `v2.22.1-r1`, 注意实际部署时不要直接复制粘贴下方命令, 一般来说, 离线安装资源包只需要配置一次,
+当前构建的最新版本可以通过 [GitHub Releases API](https://docs.github.com/en/rest/releases/releases?apiVersion=2022-11-28#get-the-latest-release) 获取到, 可以按照下方命令下载离线安装包和进行初始设置, 也可以通过浏览器手动完成下载过程. 一般来说, 离线安装包只需要配置一次. 后续如有新安装集群需求, 只需要复制 kubespray 源码中 `inventory/sample-offline` 目录即可, 不需要重复执行这些设置,
 
-```
+```shell
 mkdir kubespray && cd kubespray/
+curl -s https://api.github.com/repos/ak1ra-lab/kubespray/releases/latest > releases_latest.json
 
-wget -c https://github.com/ak1ra-lab/kubespray/releases/download/v2.22.1-r1/kubespray-offline-v2.22.1-r1-amd64.tar.gz.{01,02,03,sha256}
+arch=$(dpkg --print-architecture)
+tag_name=$(jq -r .tag_name releases_latest.json)
 
-cat kubespray-offline-v2.22.1-r1-amd64.tar.gz.{01,02,03} > kubespray-offline-v2.22.1-r1-amd64.tar.gz
+wget -c $(jq -r .assets[].browser_download_url releases_latest.json | grep $arch)
 
-sha256sum -c kubespray-offline-v2.22.1-r1-amd64.tar.gz.sha256
-kubespray-offline-v2.22.1-r1-amd64.tar.gz: OK
+cat kubespray-offline-${tag_name}-${arch}.tar.gz.0* > kubespray-offline-${tag_name}-${arch}.tar.gz
+sha256sum -c kubespray-offline-${tag_name}-${arch}.tar.gz.sha256
+rm -f kubespray-offline-${tag_name}-${arch}.tar.gz.0*
 
-tar -xf kubespray-offline-v2.22.1-r1-amd64.tar.gz
-
-cd kubespray-offline/ && bash setup.sh
+tar -xf kubespray-offline-${tag_name}-${arch}.tar.gz
+cd kubespray-offline/ && bash -x setup.sh
 ```
 
-准备 kubespray 源码, `kubespray-offline/kubespray-offline.tar.gz` 文件为一同打包的 offline 分支的 kubespray 源码, 不包含 git 历史提交记录, 可以直接使用这个, 也可以从 GitHub 克隆, 注意如果克隆的话需要切换到 `offline` 分支, 不然之后会找不到 `inventory/sample-offline` 目录.
+设置完成后, 准备 kubespray 源码.
 
-```
+`kubespray-offline/kubespray-offline.tar.gz` 文件为一同打包的 offline 分支的 kubespray 源码, 不包含 git 历史提交记录, 可以直接使用这个, 也可以自行从 GitHub 克隆, 注意如果使用克隆的代码需要切换到 offline 分支, `inventory/sample-offline` 目录只存在于 offline 分支.
+
+```shell
 tar -xf kubespray-offline.tar.gz && cd kubespray-offline/
 
 python3 -m venv venv && source venv/bin/activate
@@ -86,7 +91,7 @@ python3 -m pip install -r requirements.txt
 
 修改 `inventory/sample-offline/group_vars/all/offline.yml` 中的 `registry_host` 和 `files_repo` 项中的 `127.0.0.1` 为 kubespray 所在节点的 IP, 如,
 
-```
+```shell
 kubespray_ip=$(ip route get 1 | awk 'NR==1 {print $(NF-2)}')
 sed -i \
     -e '/^registry_host/s/127.0.0.1/'${kubespray_ip}'/' \
@@ -105,7 +110,7 @@ sed -i \
 
 以新创建单集群 `k8s-alpha-test` 为例, 待安装节点为 `172.16.10.10`,
 
-```
+```shell
 cp -r inventory/sample-offline inventory/k8s-alpha-test
 
 export CONFIG_FILE=inventory/k8s-alpha-test/hosts.yaml
