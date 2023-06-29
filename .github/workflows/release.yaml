@@ -53,7 +53,7 @@ jobs:
         shell: bash
         run: |
           cd contrib/offline
-          tar -czf "../../${KUBESPRAY_OFFLINE_ARCHIVE}" resources/
+          tar -czf "../../${KUBESPRAY_OFFLINE_ARCHIVE}" kubespray-offline/
           cd ../../
 
           sha256sum "${KUBESPRAY_OFFLINE_ARCHIVE}" | tee "${KUBESPRAY_OFFLINE_ARCHIVE}.sha256"

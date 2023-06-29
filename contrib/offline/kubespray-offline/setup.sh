@@ -10,8 +10,9 @@ function setup() {
     systemctl restart buildkit.service containerd.service
 
     # load registry and nginx images
-    test -f nginx/images/registry.tar && nerdctl image load -i nginx/images/registry.tar
-    test -f nginx/images/nginx.tar && nerdctl image load -i nginx/images/nginx.tar
+    for image in $(find resources/nginx/images/ -type f -name '*.tar'); do
+        test -f $image && nerdctl image load -i $image
+    done
 
     # start registry and nginx containers
     nerdctl compose -f compose.yaml up -d

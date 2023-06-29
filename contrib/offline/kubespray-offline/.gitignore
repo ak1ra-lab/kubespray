@@ -1,6 +1,4 @@
-images/
-nginx/
-registry/
+resources/
 compose.yaml
 files.list
 images.list

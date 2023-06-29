@@ -1,27 +1,22 @@
 #! /bin/bash
 # This script is used by GitHub Actions
 # Before running this script, you should have a running registry:2 container
-#   resources/
-#     registry/        ->    downloaded images from temp/images.list in registry:2 format
-#     nginx/files/     ->    downloaded files from temp/files.list
-#     nginx/images/    ->    extra nginx and registry in docker-archive format
-#     nginx.conf       ->    nginx.conf for files server
-#     setup.sh         ->    helper script to setup and start nginx, registry containers
 
 ARCH=${ARCH:-amd64}
 REGISTRY_NAME="${REGISTRY_NAME:-registry}"
 REGISTRY_ADDR="${REGISTRY_ADDR:-127.0.0.1:5000}"
 
-OFFLINE_DIR=$(dirname "$(readlink -f \"$0\")")
-TEMP_DIR="${OFFLINE_DIR}/temp"
+SCRIPT_DIR=$(dirname "$(readlink -f \"$0\")")
+TEMP_DIR="${SCRIPT_DIR}/temp"
+OFFLINE_DIR="${SCRIPT_DIR}/kubespray-offline"
 RESOURCES_DIR="${OFFLINE_DIR}/resources"
 
 FILES_LIST=${FILES_LIST:-"${TEMP_DIR}/files.list"}
-OFFLINE_FILES_DIR="${RESOURCES_DIR}/nginx/files"
+FILES_DIR="${RESOURCES_DIR}/nginx/files"
 
 # Docker Registry HTTP API v2
 IMAGES_LIST=${IMAGES_LIST:-"${TEMP_DIR}/images.list"}
-OFFLINE_IMAGES_DIR="${RESOURCES_DIR}/"
+IMAGES_DIR="${RESOURCES_DIR}/"
 
 # Extra images
 EXTRA_NGINX_VERSION=${EXTRA_NGINX_VERSION:-1.25}
@@ -37,7 +32,7 @@ function download_files_list() {
         exit 1
     fi
 
-    test -d "${OFFLINE_FILES_DIR}" || mkdir -p "${OFFLINE_FILES_DIR}"
+    test -d "${FILES_DIR}" || mkdir -p "${FILES_DIR}"
 
     # append nerdctl-full-*.tar.gz
     if echo "${ARCH}" | grep -qE 'amd64|arm64'; then
@@ -49,7 +44,7 @@ function download_files_list() {
     cat "${FILES_LIST}" && cp -v "${FILES_LIST}" "${RESOURCES_DIR}"
     wget \
         --quiet --continue --force-directories \
-        --directory-prefix="${OFFLINE_FILES_DIR}" --input-file="${FILES_LIST}"
+        --directory-prefix="${FILES_DIR}" --input-file="${FILES_LIST}"
 }
 
 function download_images_list() {
@@ -58,7 +53,7 @@ function download_images_list() {
         exit 1
     fi
 
-    test -d "${OFFLINE_IMAGES_DIR}" || mkdir -p "${OFFLINE_IMAGES_DIR}"
+    test -d "${IMAGES_DIR}" || mkdir -p "${IMAGES_DIR}"
 
     echo "==== download_images_list ===="
     cat "${IMAGES_LIST}" && cp -v "${IMAGES_LIST}" "${RESOURCES_DIR}"
@@ -70,8 +65,8 @@ function download_images_list() {
         sleep 5
     done
 
-    test -d "${OFFLINE_IMAGES_DIR}/registry" && rm -rf "${OFFLINE_IMAGES_DIR}/registry"
-    docker cp -a "${REGISTRY_NAME}:/var/lib/registry" "${OFFLINE_IMAGES_DIR}"
+    test -d "${IMAGES_DIR}/registry" && rm -rf "${IMAGES_DIR}/registry"
+    docker cp -a "${REGISTRY_NAME}:/var/lib/registry" "${IMAGES_DIR}"
 }
 
 function download_extra_images() {
@@ -82,13 +77,14 @@ function download_extra_images() {
 }
 
 function download_kubespray_source() {
+    # offline branch source code archive of kubespray
     wget \
-        --output-document=${RESOURCES_DIR}/kubespray-offline.tar.gz \
+        --quiet --output-document=${OFFLINE_DIR}/kubespray-offline.tar.gz \
         --continue https://github.com/ak1ra-lab/kubespray/archive/refs/heads/offline.tar.gz
 }
 
 function gen_compose_yaml() {
-    cat >${RESOURCES_DIR}/compose.yaml <<EOF
+    cat >${OFFLINE_DIR}/compose.yaml <<EOF
 ---
 version: '3'
 services:
@@ -97,7 +93,7 @@ services:
     container_name: nginx
     restart: always
     volumes:
-      - ./nginx:/usr/share/nginx
+      - ./resources/nginx:/usr/share/nginx
       - ./nginx.conf:/etc/nginx/nginx.conf
     ports:
       - 8080:8080
@@ -107,7 +103,7 @@ services:
     container_name: registry
     restart: always
     volumes:
-      - ./registry:/var/lib/registry
+      - ./resources/registry:/var/lib/registry
     ports:
       - 5000:5000
 EOF
