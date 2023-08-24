@@ -33,15 +33,11 @@ etcd_download_url: "{{ files_repo }}/github.com/etcd-io/etcd/releases/download/{
 
 # [Optional] Calico: If using Calico network plugin
 calicoctl_download_url: "{{ files_repo }}/github.com/projectcalico/calico/releases/download/{{ calico_ctl_version }}/calicoctl-linux-{{ image_arch }}"
-calicoctl_alternate_download_url: "{{ files_repo }}/github.com/projectcalico/calicoctl/releases/download/{{ calico_ctl_version }}/calicoctl-linux-{{ image_arch }}"
 # [Optional] Calico with kdd: If using Calico network plugin with kdd datastore
 calico_crds_download_url: "{{ files_repo }}/github.com/projectcalico/calico/archive/{{ calico_version }}.tar.gz"
 
 # [Optional] Cilium: If using Cilium network plugin
 ciliumcli_download_url: "{{ files_repo }}/github.com/cilium/cilium-cli/releases/download/{{ cilium_cli_version }}/cilium-linux-{{ image_arch }}.tar.gz"
-
-# [Optional] Flannel: If using Flannel network plugin
-flannel_cni_download_url: "{{ files_repo }}/kubernetes/flannel/{{ flannel_cni_version }}/flannel-{{ image_arch }}"
 
 # [Optional] helm: only if you set helm_enabled: true
 helm_download_url: "{{ files_repo }}/get.helm.sh/helm-{{ helm_version }}-linux-{{ image_arch }}.tar.gz"
@@ -59,8 +55,8 @@ cri_dockerd_download_url: "{{ files_repo }}/github.com/Mirantis/cri-dockerd/rele
 runc_download_url: "{{ files_repo }}/github.com/opencontainers/runc/releases/download/{{ runc_version }}/runc.{{ image_arch }}"
 
 # [Optional] cri-o: only if you set container_manager: crio
-crio_download_base: "download.opensuse.org/repositories/devel:kubic:libcontainers:stable"
-crio_download_crio: "http://{{ crio_download_base }}:/cri-o:/"
+# crio_download_base: "download.opensuse.org/repositories/devel:kubic:libcontainers:stable"
+# crio_download_crio: "http://{{ crio_download_base }}:/cri-o:/"
 crio_download_url: "{{ files_repo }}/storage.googleapis.com/cri-o/artifacts/cri-o.{{ image_arch }}.{{ crio_version }}.tar.gz"
 skopeo_download_url: "{{ files_repo }}/github.com/lework/skopeo-binary/releases/download/{{ skopeo_version }}/skopeo-linux-{{ image_arch }}"
 

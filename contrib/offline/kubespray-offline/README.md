@@ -57,7 +57,7 @@ kubespray-offline/
     * 使用 `nerdctl image load` 导入 nginx 与 registry 镜像
     * 使用 `nerdctl compose -f compose.yaml up -d` 启动 nginx 与 registry 服务
 
-当前构建的最新版本可以通过 [GitHub Releases API](https://docs.github.com/en/rest/releases/releases?apiVersion=2022-11-28#get-the-latest-release) 获取到, 可以按照下方命令下载离线安装包和进行初始设置, 也可以通过浏览器手动完成下载过程. 一般来说, 离线安装包只需要配置一次. 后续如有新安装集群需求, 只需要复制 kubespray 源码中 `inventory/sample-offline` 目录即可, 不需要重复执行这些设置,
+当前构建的最新版本可以通过 [GitHub Releases API](https://docs.github.com/en/rest/releases/releases?apiVersion=2022-11-28#get-the-latest-release) 获取到, 可以按照下方命令下载离线安装包和进行初始设置, 也可以通过浏览器手动完成下载过程. 一般来说, 离线安装包只需要配置一次. 后续如有新安装集群需求, 只需要复制 kubespray 源码中 `inventory/offline` 目录即可, 不需要重复执行这些设置,
 
 ```shell
 mkdir kubespray && cd kubespray/
@@ -78,7 +78,7 @@ cd kubespray-offline/ && bash -x setup.sh
 
 设置完成后, 准备 kubespray 源码.
 
-`kubespray-offline/kubespray-offline.tar.gz` 文件为一同打包的 offline 分支的 kubespray 源码, 不包含 git 历史提交记录, 可以直接使用这个, 也可以自行从 GitHub 克隆, 注意如果使用克隆的代码需要切换到 offline 分支, `inventory/sample-offline` 目录只存在于 offline 分支.
+`kubespray-offline/kubespray-offline.tar.gz` 文件为一同打包的 offline 分支的 kubespray 源码, 不包含 git 历史提交记录, 可以直接使用这个, 也可以自行从 GitHub 克隆, 注意如果使用克隆的代码需要切换到 offline 分支, `inventory/offline` 目录只存在于 offline 分支.
 
 ```shell
 tar -xf kubespray-offline.tar.gz && cd kubespray-offline/
@@ -89,29 +89,29 @@ python3 -m pip install -r requirements.txt
 
 规划好要部署的集群节点, 准备好安装 Kubernetes 的 服务器/虚拟机, 需要在各个节点上添加 kubespray 所在服务器的公钥, 即配置好免密登录.
 
-修改 `inventory/sample-offline/group_vars/all/offline.yml` 中的 `registry_host` 和 `files_repo` 项中的 `127.0.0.1` 为 kubespray 所在节点的 IP, 如,
+修改 `inventory/offline/group_vars/all/offline.yml` 中的 `registry_host` 和 `files_repo` 项中的 `127.0.0.1` 为 kubespray 所在节点的 IP, 如,
 
 ```shell
 kubespray_ip=$(ip route get 1 | awk 'NR==1 {print $(NF-2)}')
 sed -i \
     -e '/^registry_host/s/127.0.0.1/'${kubespray_ip}'/' \
     -e '/^files_repo/s/127.0.0.1/'${kubespray_ip}'/' \
-    inventory/sample-offline/group_vars/all/offline.yml
+    inventory/offline/group_vars/all/offline.yml
 ```
 
-以示例 `inventory/sample-offline` 为模板, 每创建一套集群需要复制一份 `inventory/sample-offline`, 根据实际需求修改 inventory 中配置, 比较重要的配置有,
+以示例 `inventory/offline` 为模板, 每创建一套集群需要复制一份 `inventory/offline`, 根据实际需求修改 inventory 中配置, 比较重要的配置有,
 
 * `group_vars/all/all.yml`
 * `group_vars/all/containerd.yml`
 * `group_vars/all/offline.yml`
 * `group_vars/k8s_cluster/k8s-cluster.yml`
 
-> `inventory/sample-offline` 相对于 kubespray 所提供的 `inventory/sample` 示例配置做了一些额外修改.
+> `inventory/offline` 相对于 kubespray 所提供的 `inventory/sample` 示例配置做了一些额外修改.
 
 以新创建单集群 `k8s-alpha-test` 为例, 待安装节点为 `172.16.10.10`,
 
 ```shell
-cp -r inventory/sample-offline inventory/k8s-alpha-test
+cp -r inventory/offline inventory/k8s-alpha-test
 
 export CONFIG_FILE=inventory/k8s-alpha-test/hosts.yaml
 python3 contrib/inventory_builder/inventory.py k8s-alpha-test-node01,172.16.10.10

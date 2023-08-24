@@ -30,16 +30,26 @@
 
 # containerd_metrics_grpc_histogram: false
 
-## An obvious use case is allowing insecure-registry access to self hosted registries.
-## Can be ipaddress and domain_name.
-## example define mirror.registry.io or 172.19.16.11:5000
-## set "name": "url". insecure url must be started http://
-## Port number is also needed if the default HTTPS port is not used.
-containerd_insecure_registries:
-  "{{ registry_host }}": "http://{{ registry_host }}"
+# Registries defined within containerd.
+# containerd_registries_mirrors:
+#  - prefix: docker.io
+#    mirrors:
+#     - host: https://registry-1.docker.io
+#       capabilities: ["pull", "resolve"]
+#       skip_verify: false
+containerd_registries_mirrors:
+  - prefix: {{ registry_host }}
+    mirrors:
+      - host: http://{{ registry_host }}
+        capabilities: ["pull", "resolve"]
+        skip_verify: true
 
-# containerd_registries:
-#   "docker.io": "https://registry-1.docker.io"
+# `containerd_registries_mirrors` is ignored for pulling images when `image_command_tool=nerdctl`
+# (the default for `container_manager=containerd`). Use `crictl` instead, it supports
+# `containerd_registries_mirrors` but lacks proper multi-arch support (see
+# [#8375](https://github.com/kubernetes-sigs/kubespray/issues/8375)):
+image_command_tool: crictl
+
 
 # containerd_max_container_log_line_size: -1
 
