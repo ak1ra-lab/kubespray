@@ -1,6 +1,6 @@
 ---
-- name: Calico | Set label for groups nodes  # noqa 301 305
-  shell: "{{ bin_dir }}/calicoctl.sh label node  {{ inventory_hostname }} calico-group-id={{ calico_group_id }} --overwrite"
+- name: Calico | Set label for groups nodes
+  command: "{{ bin_dir }}/calicoctl.sh label node  {{ inventory_hostname }} calico-group-id={{ calico_group_id }} --overwrite"
   changed_when: false
   register: calico_group_id_label
   until: calico_group_id_label is succeeded
@@ -13,7 +13,7 @@
   command:
     cmd: "{{ bin_dir }}/calicoctl.sh apply -f -"
     # revert when it's already a string
-    stdin: "{{ stdin is string | ternary(stdin, stdin|to_json) }}"
+    stdin: "{{ stdin is string | ternary(stdin, stdin | to_json) }}"
   vars:
     stdin: >
       {"apiVersion": "projectcalico.org/v3",
@@ -38,7 +38,7 @@
   command:
     cmd: "{{ bin_dir }}/calicoctl.sh apply -f -"
     # revert when it's already a string
-    stdin: "{{ stdin is string | ternary(stdin, stdin|to_json) }}"
+    stdin: "{{ stdin is string | ternary(stdin, stdin | to_json) }}"
   vars:
     stdin: >
       {"apiVersion": "projectcalico.org/v3",
@@ -64,7 +64,7 @@
   command:
     cmd: "{{ bin_dir }}/calicoctl.sh apply -f -"
     # revert when it's already a string
-    stdin: "{{ stdin is string | ternary(stdin, stdin|to_json) }}"
+    stdin: "{{ stdin is string | ternary(stdin, stdin | to_json) }}"
   vars:
     stdin: >
       {"apiVersion": "projectcalico.org/v3",

@@ -17,6 +17,7 @@
 
 - name: Set fact NTP settings
   set_fact:
+    # noqa: jinja[spacing]
     ntp_config_file: >-
       {% if ntp_package == "ntp" -%}
       /etc/ntp.conf
@@ -25,10 +26,11 @@
       {%- else -%}
       /etc/chrony/chrony.conf
       {%- endif -%}
+    # noqa: jinja[spacing]
     ntp_service_name: >-
       {% if ntp_package == "chrony" -%}
       chronyd
-      {%- elif ansible_os_family == 'RedHat' -%}
+      {%- elif ansible_os_family in ["Flatcar", "Flatcar Container Linux by Kinvolk", "RedHat"] -%}
       ntpd
       {%- else -%}
       ntp
@@ -51,6 +53,7 @@
     - ntp_force_sync_immediately
 
 - name: Force Sync NTP Immediately
+  # noqa: jinja[spacing]
   command: >-
       timeout -k 60s 60s
       {% if ntp_package == "ntp" -%}
@@ -78,7 +81,7 @@
     - not ansible_os_family in ["Flatcar", "Flatcar Container Linux by Kinvolk"]
 
 - name: Set timezone
-  timezone:
+  community.general.timezone:
     name: "{{ ntp_timezone }}"
   when:
     - ntp_timezone

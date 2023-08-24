@@ -10,6 +10,16 @@ containerd_registries:
     - "https://mirror.gcr.io"
     - "https://registry-1.docker.io"
 
+containerd_registries_mirrors:
+  - prefix: docker.io
+    mirrors:
+      - host: https://mirror.gcr.io
+        capabilities: ["pull", "resolve"]
+        skip_verify: false
+      - host: https://registry-1.docker.io
+        capabilities: ["pull", "resolve"]
+        skip_verify: false
+
 containerd_max_container_log_line_size: -1
 
 crio_registries:
@@ -27,8 +37,8 @@ netcheck_server_image_repo: "{{ quay_image_repo }}/kubespray/k8s-netchecker-serv
 
 nginx_image_repo: "{{ quay_image_repo }}/kubespray/nginx"
 
-flannel_image_repo: "{{ quay_image_repo}}/kubespray/flannel"
-flannel_init_image_repo: "{{ quay_image_repo}}/kubespray/flannel-cni-plugin"
+flannel_image_repo: "{{ quay_image_repo }}/kubespray/flannel"
+flannel_init_image_repo: "{{ quay_image_repo }}/kubespray/flannel-cni-plugin"
 
 # Kubespray settings for tests
 deploy_netchecker: true

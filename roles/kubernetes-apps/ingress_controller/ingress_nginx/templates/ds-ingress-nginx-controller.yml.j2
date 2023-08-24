@@ -35,7 +35,7 @@ spec:
       tolerations:
         {{ ingress_nginx_tolerations | to_nice_yaml(indent=2) | indent(width=8) }}
 {% endif %}
-      priorityClassName: {% if ingress_nginx_namespace == 'kube-system' %}system-node-critical{% else %}k8s-cluster-critical{% endif %}{{''}}
+      priorityClassName: {% if ingress_nginx_namespace == 'kube-system' %}system-node-critical{% else %}k8s-cluster-critical{% endif %}{{ '' }}
       containers:
         - name: ingress-nginx-controller
           image: {{ ingress_nginx_controller_image_repo }}:{{ ingress_nginx_controller_image_tag }}
@@ -51,9 +51,8 @@ spec:
             - --tcp-services-configmap=$(POD_NAMESPACE)/tcp-services
             - --udp-services-configmap=$(POD_NAMESPACE)/udp-services
             - --annotations-prefix=nginx.ingress.kubernetes.io
-{% if ingress_nginx_class is defined %}
             - --ingress-class={{ ingress_nginx_class }}
-{% else %}
+{% if ingress_nginx_without_class %}
             - --watch-ingress-without-class=true
 {% endif %}
 {% if ingress_nginx_host_network %}

@@ -5,7 +5,11 @@
   register: calico_cni_config_slurp
   failed_when: false
 
-- block:
+- name: Gather calico facts
+  tags:
+  - facts
+  when: calico_cni_config_slurp.content is defined
+  block:
   - name: Set fact calico_cni_config from slurped CNI config
     set_fact:
       calico_cni_config: "{{ calico_cni_config_slurp['content'] | b64decode | from_json }}"
@@ -15,7 +19,6 @@
     when:
     - "'plugins' in calico_cni_config"
     - "'etcd_endpoints' in calico_cni_config.plugins.0"
-  when: calico_cni_config_slurp.content is defined
 
 - name: Calico | Get kubelet hostname
   shell: >-
@@ -32,15 +35,13 @@
   include_vars: "{{ item }}"
   with_first_found:
   - files:
-    - "{{ ansible_distribution|lower }}-{{ ansible_distribution_version|lower|replace('/', '_') }}.yml"
-    - "{{ ansible_distribution|lower }}-{{ ansible_distribution_release }}.yml"
-    - "{{ ansible_distribution|lower }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
-    - "{{ ansible_distribution|lower }}.yml"
-    - "{{ ansible_os_family|lower }}-{{ ansible_architecture }}.yml"
-    - "{{ ansible_os_family|lower }}.yml"
+    - "{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower | replace('/', '_') }}.yml"
+    - "{{ ansible_distribution | lower }}-{{ ansible_distribution_release }}.yml"
+    - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version | lower | replace('/', '_') }}.yml"
+    - "{{ ansible_distribution | lower }}.yml"
+    - "{{ ansible_os_family | lower }}-{{ ansible_architecture }}.yml"
+    - "{{ ansible_os_family | lower }}.yml"
     - defaults.yml
     paths:
     - ../vars
     skip: true
-  tags:
-  - facts

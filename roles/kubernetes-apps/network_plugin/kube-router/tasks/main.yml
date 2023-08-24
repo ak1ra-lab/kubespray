@@ -1,6 +1,6 @@
 ---
 
-- name: kube-router | Start Resources
+- name: Kube-router | Start Resources
   kube:
     name: "kube-router"
     kubectl: "{{ bin_dir }}/kubectl"
@@ -11,8 +11,8 @@
   delegate_to: "{{ groups['kube_control_plane'] | first }}"
   run_once: true
 
-- name: kube-router | Wait for kube-router pods to be ready
-  command: "{{ kubectl }} -n kube-system get pods -l k8s-app=kube-router -o jsonpath='{.items[?(@.status.containerStatuses[0].ready==false)].metadata.name}'"   # noqa 601 ignore-errors
+- name: Kube-router | Wait for kube-router pods to be ready
+  command: "{{ kubectl }} -n kube-system get pods -l k8s-app=kube-router -o jsonpath='{.items[?(@.status.containerStatuses[0].ready==false)].metadata.name}'"   # noqa ignore-errors
   register: pods_not_ready
   until: pods_not_ready.stdout.find("kube-router")==-1
   retries: 30

@@ -5,12 +5,17 @@
 
 - name: Set VM count needed for CI test_id
   set_fact:
-    vm_count: "{%- if mode in ['separate', 'separate-scale', 'ha', 'ha-scale', 'ha-recover', 'ha-recover-noquorum'] -%}{{ 3|int }}{%- elif mode == 'aio' -%}{{ 1|int }}{%- else -%}{{ 2|int }}{%- endif -%}"
+    vm_count: "{%- if mode in ['separate', 'separate-scale', 'ha', 'ha-scale', 'ha-recover', 'ha-recover-noquorum'] -%}{{ 3 | int }}{%- elif mode == 'aio' -%}{{ 1 | int }}{%- else -%}{{ 2 | int }}{%- endif -%}"
 
-- import_tasks: create-vms.yml
+- name: Cleamup old VMs
+  import_tasks: cleanup-old-vms.yml
+
+- name: Create VMs
+  import_tasks: create-vms.yml
   when:
     - not vm_cleanup
 
-- import_tasks: delete-vms.yml
+- name: Delete VMs
+  import_tasks: delete-vms.yml
   when:
     - vm_cleanup | default(false)

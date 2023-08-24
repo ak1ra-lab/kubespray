@@ -120,7 +120,7 @@ following default cluster parameters:
   alpha/experimental Kubeadm features. (defaults is `[]`)
 
 * *authorization_modes* - A list of [authorization mode](
-  https://kubernetes.io/docs/admin/authorization/#using-flags-for-your-authorization-module)
+  https://kubernetes.io/docs/reference/access-authn-authz/authorization/#using-flags-for-your-authorization-module)
   that the cluster should be configured for. Defaults to `['Node', 'RBAC']`
   (Node and RBAC authorizers).
   Note: `Node` and `RBAC` are enabled by default. Previously deployed clusters can be
@@ -215,6 +215,12 @@ Stack](https://github.com/kubernetes-sigs/kubespray/blob/master/docs/dns-stack.m
   When specified, the value must be less than imageGCHighThresholdPercent. Default: 80
 
 * *kubelet_make_iptables_util_chains* - If `true`, causes the kubelet ensures a set of `iptables` rules are present on host.
+
+* *kubelet_cpu_manager_policy* -  If set to `static`, allows pods with certain resource characteristics to be granted increased CPU affinity and exclusivity on the node. And it should be set with `kube_reserved` or `system-reserved`, enable this with the following guide:[Control CPU Management Policies on the Node](https://kubernetes.io/docs/tasks/administer-cluster/cpu-management-policies/)
+
+* *kubelet_topoloy_manager_policy* - Control the behavior of the allocation of CPU and Memory from different [NUMA](https://en.wikipedia.org/wiki/Non-uniform_memory_access) Nodes. Enable this with the following guide: [Control Topology Management Policies on a node](https://kubernetes.io/docs/tasks/administer-cluster/topology-manager).
+
+* *kubelet_topology_manager_scope* - The Topology Manager can deal with the alignment of resources in a couple of distinct scopes: `container` and `pod`. See [Topology Manager Scopes](https://kubernetes.io/docs/tasks/administer-cluster/topology-manager/#topology-manager-scopes).
 
 * *kubelet_systemd_hardening* - If `true`, provides kubelet systemd service with security features for isolation.
 

@@ -5,8 +5,8 @@
     download: "{{ download_defaults | combine(downloads.yq) }}"
 
 - name: Kubernetes Apps | Copy yq binary from download dir
-  synchronize:
-    src: "{{ local_release_dir }}/yq"
+  ansible.posix.synchronize:
+    src: "{{ downloads.yq.dest }}"
     dest: "{{ bin_dir }}/yq"
     compress: no
     perms: yes
@@ -22,7 +22,7 @@
       - name: install
         file: argocd-install.yml
         namespace: "{{ argocd_namespace }}"
-        url: "https://raw.githubusercontent.com/argoproj/argo-cd/{{ argocd_version }}/manifests/install.yaml"
+        url: "{{ argocd_install_url }}"
   when:
     - "inventory_hostname == groups['kube_control_plane'][0]"
 
@@ -46,7 +46,7 @@
     - "inventory_hostname == groups['kube_control_plane'][0]"
 
 - name: Kubernetes Apps | Copy ArgoCD remote manifests from download dir
-  synchronize:
+  ansible.posix.synchronize:
     src: "{{ local_release_dir }}/{{ item.file }}"
     dest: "{{ kube_config_dir }}/{{ item.file }}"
     compress: no

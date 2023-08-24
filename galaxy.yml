@@ -2,13 +2,12 @@
 namespace: kubernetes_sigs
 description: Deploy a production ready Kubernetes cluster
 name: kubespray
-version: 2.21.0
+version: 2.22.1
 readme: README.md
 authors:
   - luksi1
 tags:
-  - kubernetes
-  - kubespray
+  - infrastructure
 repository: https://github.com/kubernetes-sigs/kubespray
 build_ignore:
   - .github

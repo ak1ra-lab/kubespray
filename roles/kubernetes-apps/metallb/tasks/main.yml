@@ -41,19 +41,22 @@
     name: "MetalLB"
     kubectl: "{{ bin_dir }}/kubectl"
     filename: "{{ kube_config_dir }}/metallb.yaml"
-    state: "{{ metallb_rendering.changed | ternary('latest','present') }}"
+    state: "{{ metallb_rendering.changed | ternary('latest', 'present') }}"
     wait: true
   become: true
   when:
     - inventory_hostname == groups['kube_control_plane'][0]
 
 - name: Kubernetes Apps | Wait for MetalLB controller to be running
-  command: "{{ bin_dir }}/kubectl -n metallb-system wait --for=condition=ready pod -l app=metallb,component=controller"
+  command: "{{ bin_dir }}/kubectl -n metallb-system wait --for=condition=ready pod -l app=metallb,component=controller --timeout=2m"
   become: true
   when:
     - inventory_hostname == groups['kube_control_plane'][0]
 
 - name: MetalLB | Address pools
+  when:
+    - inventory_hostname == groups['kube_control_plane'][0]
+    - metallb_config.address_pools is defined
   block:
     - name: MetalLB | Layout address pools template
       ansible.builtin.template:
@@ -67,13 +70,13 @@
         name: "MetalLB"
         kubectl: "{{ bin_dir }}/kubectl"
         filename: "{{ kube_config_dir }}/pools.yaml"
-        state: "{{ pools_rendering.changed | ternary('latest','present') }}"
+        state: "{{ pools_rendering.changed | ternary('latest', 'present') }}"
       become: true
-  when:
-    - inventory_hostname == groups['kube_control_plane'][0]
-    - metallb_config.address_pools is defined
 
 - name: MetalLB | Layer2
+  when:
+    - inventory_hostname == groups['kube_control_plane'][0]
+    - metallb_config.layer2 is defined
   block:
     - name: MetalLB | Layout layer2 template
       ansible.builtin.template:
@@ -87,13 +90,13 @@
         name: "MetalLB"
         kubectl: "{{ bin_dir }}/kubectl"
         filename: "{{ kube_config_dir }}/layer2.yaml"
-        state: "{{ layer2_rendering.changed | ternary('latest','present') }}"
+        state: "{{ layer2_rendering.changed | ternary('latest', 'present') }}"
       become: true
-  when:
-    - inventory_hostname == groups['kube_control_plane'][0]
-    - metallb_config.layer2 is defined
 
 - name: MetalLB | Layer3
+  when:
+    - inventory_hostname == groups['kube_control_plane'][0]
+    - metallb_config.layer3 is defined
   block:
     - name: MetalLB | Layout layer3 template
       ansible.builtin.template:
@@ -107,11 +110,8 @@
         name: "MetalLB"
         kubectl: "{{ bin_dir }}/kubectl"
         filename: "{{ kube_config_dir }}/layer3.yaml"
-        state: "{{ layer3_rendering.changed | ternary('latest','present') }}"
+        state: "{{ layer3_rendering.changed | ternary('latest', 'present') }}"
       become: true
-  when:
-    - inventory_hostname == groups['kube_control_plane'][0]
-    - metallb_config.layer3 is defined
 
 
 - name: Kubernetes Apps | Delete MetalLB ConfigMap

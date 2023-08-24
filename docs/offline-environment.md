@@ -33,6 +33,7 @@ kube_image_repo: "{{ registry_host }}"
 gcr_image_repo: "{{ registry_host }}"
 docker_image_repo: "{{ registry_host }}"
 quay_image_repo: "{{ registry_host }}"
+github_image_repo: "{{ registry_host }}"
 
 kubeadm_download_url: "{{ files_repo }}/kubernetes/{{ kube_version }}/kubeadm"
 kubectl_download_url: "{{ files_repo }}/kubernetes/{{ kube_version }}/kubectl"
@@ -50,8 +51,12 @@ containerd_download_url: "{{ files_repo }}/containerd-{{ containerd_version }}-l
 runc_download_url: "{{ files_repo }}/runc.{{ image_arch }}"
 nerdctl_download_url: "{{ files_repo }}/nerdctl-{{ nerdctl_version }}-{{ ansible_system | lower }}-{{ image_arch }}.tar.gz"
 # Insecure registries for containerd
-containerd_insecure_registries:
-    "{{ registry_addr }}"："{{ registry_host }}"
+containerd_registries_mirrors:
+  - prefix: "{{ registry_addr }}"
+    mirrors:
+      - host: "{{ registry_host }}"
+        capabilities: ["pull", "resolve"]
+        skip_verify: true
 
 # CentOS/Redhat/AlmaLinux/Rocky Linux
 ## Docker / Containerd
@@ -90,7 +95,7 @@ If you use the settings like the one above, you'll need to define in your invent
 
 * `registry_host`: Container image registry. If you _don't_ use the same repository path for the container images that
   the ones defined
-  in [Download's role defaults](https://github.com/kubernetes-sigs/kubespray/blob/master/roles/download/defaults/main.yml)
+  in [Download's role defaults](https://github.com/kubernetes-sigs/kubespray/blob/master/roles/download/defaults/main/main.yml)
   , you need to override the `*_image_repo` for these container images. If you want to make your life easier, use the
   same repository path, you won't have to override anything else.
 * `registry_addr`: Container image registry, but only have [domain or ip]:[port].

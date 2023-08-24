@@ -75,11 +75,11 @@ You will then need to use [bind mounts](https://docs.docker.com/storage/bind-mou
 to access the inventory and SSH key in the container, like this:
 
 ```ShellSession
-git checkout v2.22.0
-docker pull quay.io/kubespray/kubespray:v2.22.0
+git checkout v2.22.1
+docker pull quay.io/kubespray/kubespray:v2.22.1
 docker run --rm -it --mount type=bind,source="$(pwd)"/inventory/sample,dst=/inventory \
   --mount type=bind,source="${HOME}"/.ssh/id_rsa,dst=/root/.ssh/id_rsa \
-  quay.io/kubespray/kubespray:v2.22.0 bash
+  quay.io/kubespray/kubespray:v2.22.1 bash
 # Inside the container you may now run the kubespray playbooks:
 ansible-playbook -i /inventory/inventory.ini --private-key /root/.ssh/id_rsa cluster.yml
 ```
@@ -142,10 +142,10 @@ vagrant up
 ## Supported Linux Distributions
 
 - **Flatcar Container Linux by Kinvolk**
-- **Debian** Bullseye, Buster
-- **Ubuntu** 16.04, 18.04, 20.04, 22.04
+- **Debian** Bookworm, Bullseye, Buster
+- **Ubuntu** 20.04, 22.04
 - **CentOS/RHEL** 7, [8, 9](docs/centos.md#centos-8)
-- **Fedora** 35, 36
+- **Fedora** 37, 38
 - **Fedora CoreOS** (see [fcos Note](docs/fcos.md))
 - **openSUSE** Leap 15.x/Tumbleweed
 - **Oracle Linux** 7, [8, 9](docs/centos.md#centos-8)
@@ -161,28 +161,28 @@ Note: Upstart/SysV init based OS types are not supported.
 ## Supported Components
 
 - Core
-  - [kubernetes](https://github.com/kubernetes/kubernetes) v1.26.5
+  - [kubernetes](https://github.com/kubernetes/kubernetes) v1.27.4
   - [etcd](https://github.com/etcd-io/etcd) v3.5.6
   - [docker](https://www.docker.com/) v20.10 (see note)
-  - [containerd](https://containerd.io/) v1.7.1
-  - [cri-o](http://cri-o.io/) v1.24 (experimental: see [CRI-O Note](docs/cri-o.md). Only on fedora, ubuntu and centos based OS)
+  - [containerd](https://containerd.io/) v1.7.3
+  - [cri-o](http://cri-o.io/) v1.27 (experimental: see [CRI-O Note](docs/cri-o.md). Only on fedora, ubuntu and centos based OS)
 - Network Plugin
   - [cni-plugins](https://github.com/containernetworking/plugins) v1.2.0
   - [calico](https://github.com/projectcalico/calico) v3.25.1
-  - [cilium](https://github.com/cilium/cilium) v1.13.0
-  - [flannel](https://github.com/flannel-io/flannel) v0.21.4
-  - [kube-ovn](https://github.com/alauda/kube-ovn) v1.10.7
+  - [cilium](https://github.com/cilium/cilium) v1.13.4
+  - [flannel](https://github.com/flannel-io/flannel) v0.22.0
+  - [kube-ovn](https://github.com/alauda/kube-ovn) v1.11.5
   - [kube-router](https://github.com/cloudnativelabs/kube-router) v1.5.1
   - [multus](https://github.com/k8snetworkplumbingwg/multus-cni) v3.8
   - [weave](https://github.com/weaveworks/weave) v2.8.1
   - [kube-vip](https://github.com/kube-vip/kube-vip) v0.5.12
 - Application
   - [cert-manager](https://github.com/jetstack/cert-manager) v1.11.1
-  - [coredns](https://github.com/coredns/coredns) v1.9.3
-  - [ingress-nginx](https://github.com/kubernetes/ingress-nginx) v1.7.1
-  - [krew](https://github.com/kubernetes-sigs/krew) v0.4.3
-  - [argocd](https://argoproj.github.io/) v2.7.2
-  - [helm](https://helm.sh/) v3.12.0
+  - [coredns](https://github.com/coredns/coredns) v1.10.1
+  - [ingress-nginx](https://github.com/kubernetes/ingress-nginx) v1.8.1
+  - [krew](https://github.com/kubernetes-sigs/krew) v0.4.4
+  - [argocd](https://argoproj.github.io/) v2.8.0
+  - [helm](https://helm.sh/) v3.12.3
   - [metallb](https://metallb.universe.tf/)  v0.13.9
   - [registry](https://github.com/distribution/distribution) v2.8.1
 - Storage Plugin
@@ -191,19 +191,19 @@ Note: Upstart/SysV init based OS types are not supported.
   - [aws-ebs-csi-plugin](https://github.com/kubernetes-sigs/aws-ebs-csi-driver) v0.5.0
   - [azure-csi-plugin](https://github.com/kubernetes-sigs/azuredisk-csi-driver) v1.10.0
   - [cinder-csi-plugin](https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/cinder-csi-plugin/using-cinder-csi-plugin.md) v1.22.0
-  - [gcp-pd-csi-plugin](https://github.com/kubernetes-sigs/gcp-compute-persistent-disk-csi-driver) v1.4.0
-  - [local-path-provisioner](https://github.com/rancher/local-path-provisioner) v0.0.23
+  - [gcp-pd-csi-plugin](https://github.com/kubernetes-sigs/gcp-compute-persistent-disk-csi-driver) v1.9.2
+  - [local-path-provisioner](https://github.com/rancher/local-path-provisioner) v0.0.24
   - [local-volume-provisioner](https://github.com/kubernetes-sigs/sig-storage-local-static-provisioner) v2.5.0
 
 ## Container Runtime Notes
 
-- Supported Docker versions are 18.09, 19.03 and 20.10. The *recommended* Docker version is 20.10. `Kubelet` might break on docker's non-standard version numbering (it no longer uses semantic versioning). To ensure auto-updates don't break your cluster look into e.g. the YUM  ``versionlock`` plugin or ``apt pin``).
+- Supported Docker versions are 18.09, 19.03, 20.10, 23.0 and 24.0. The *recommended* Docker version is 20.10 (except on Debian bookworm which without supporting for 20.10 and below any more). `Kubelet` might break on docker's non-standard version numbering (it no longer uses semantic versioning). To ensure auto-updates don't break your cluster look into e.g. the YUM  ``versionlock`` plugin or ``apt pin``).
 - The cri-o version should be aligned with the respective kubernetes version (i.e. kube_version=1.20.x, crio_version=1.20)
 
 ## Requirements
 
-- **Minimum required version of Kubernetes is v1.24**
-- **Ansible v2.11+, Jinja 2.11+ and python-netaddr is installed on the machine that will run Ansible commands**
+- **Minimum required version of Kubernetes is v1.25**
+- **Ansible v2.14+, Jinja 2.11+ and python-netaddr is installed on the machine that will run Ansible commands**
 - The target servers must have **access to the Internet** in order to pull docker images. Otherwise, additional configuration is required (See [Offline Environment](docs/offline-environment.md))
 - The target servers are configured to allow **IPv4 forwarding**.
 - If using IPv6 for pods and services, the target servers are configured to allow **IPv6 forwarding**.
@@ -227,7 +227,7 @@ You can choose among ten network plugins. (default: `calico`, except Vagrant use
 
 - [flannel](docs/flannel.md): gre/vxlan (layer 2) networking.
 
-- [Calico](https://docs.projectcalico.org/latest/introduction/) is a networking and network policy provider. Calico supports a flexible set of networking options
+- [Calico](https://docs.tigera.io/calico/latest/about/) is a networking and network policy provider. Calico supports a flexible set of networking options
     designed to give you the most efficient networking across a range of situations, including non-overlay
     and overlay networks, with or without BGP. Calico uses the same engine to enforce network policy for hosts,
     pods, and (if using Istio and Envoy) applications at the service mesh layer.

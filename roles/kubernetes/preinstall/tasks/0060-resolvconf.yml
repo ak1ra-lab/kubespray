@@ -1,5 +1,5 @@
 ---
-- name: create temporary resolveconf cloud init file
+- name: Create temporary resolveconf cloud init file
   command: cp -f /etc/resolv.conf "{{ resolvconffile }}"
   when: ansible_os_family in ["Flatcar", "Flatcar Container Linux by Kinvolk"]
 
@@ -13,7 +13,7 @@
       {% for item in nameserverentries.split(',') %}
       nameserver {{ item }}
       {% endfor %}
-      options ndots:{{ ndots }} timeout:{{ dns_timeout|default('2') }} attempts:{{ dns_attempts|default('2') }}
+      options ndots:{{ ndots }} timeout:{{ dns_timeout | default('2') }} attempts:{{ dns_attempts | default('2') }}
     state: present
     insertbefore: BOF
     create: yes
@@ -28,7 +28,7 @@
     regexp: '^{{ item[1] }}[^#]*(?=# Ansible entries BEGIN)'
     backup: "{{ not resolvconf_stat.stat.islnk }}"
   with_nested:
-    - "{{ [resolvconffile, base|default(''), head|default('')] | difference(['']) }}"
+    - "{{ [resolvconffile, base | default(''), head | default('')] | difference(['']) }}"
     - [ 'search\s', 'nameserver\s', 'domain\s', 'options\s' ]
   notify: Preinstall | propagate resolvconf to k8s components
 
@@ -39,16 +39,16 @@
     replace: '\1'
     backup: "{{ not resolvconf_stat.stat.islnk }}"
   with_nested:
-    - "{{ [resolvconffile, base|default(''), head|default('')] | difference(['']) }}"
+    - "{{ [resolvconffile, base | default(''), head | default('')] | difference(['']) }}"
     - [ 'search\s', 'nameserver\s', 'domain\s', 'options\s' ]
   notify: Preinstall | propagate resolvconf to k8s components
 
-- name: get temporary resolveconf cloud init file content
+- name: Get temporary resolveconf cloud init file content
   command: cat {{ resolvconffile }}
   register: cloud_config
   when: ansible_os_family in ["Flatcar", "Flatcar Container Linux by Kinvolk"]
 
-- name: persist resolvconf cloud init file
+- name: Persist resolvconf cloud init file
   template:
     dest: "{{ resolveconf_cloud_init_conf }}"
     src: resolvconf.j2

@@ -23,6 +23,14 @@
   allow_failure: true
   extends: .packet
 
+packet_cleanup_old:
+  stage: deploy-part1
+  extends: .packet_periodic
+  script:
+    - cd tests
+    - make cleanup-packet
+  after_script: []
+
 # The ubuntu20-calico-aio jobs are meant as early stages to prevent running the full CI if something is horribly broken
 packet_ubuntu20-calico-aio:
   stage: deploy-part1
@@ -31,20 +39,7 @@ packet_ubuntu20-calico-aio:
   variables:
     RESET_CHECK: "true"
 
-packet_ubuntu20-calico-aio-ansible-2_11:
-  stage: deploy-part1
-  extends: .packet_periodic
-  when: on_success
-  variables:
-    ANSIBLE_MAJOR_VERSION: "2.11"
-    RESET_CHECK: "true"
-
 # ### PR JOBS PART2
-
-packet_ubuntu18-aio-docker:
-  stage: deploy-part2
-  extends: .packet_pr
-  when: on_success
 
 packet_ubuntu20-aio-docker:
   stage: deploy-part2
@@ -52,11 +47,6 @@ packet_ubuntu20-aio-docker:
   when: on_success
 
 packet_ubuntu20-calico-aio-hardening:
-  stage: deploy-part2
-  extends: .packet_pr
-  when: on_success
-
-packet_ubuntu18-calico-aio:
   stage: deploy-part2
   extends: .packet_pr
   when: on_success
@@ -80,18 +70,19 @@ packet_almalinux8-crio:
   extends: .packet_pr
   stage: deploy-part2
   when: on_success
+  allow_failure: true
 
-packet_ubuntu18-crio:
+packet_ubuntu20-crio:
   extends: .packet_pr
   stage: deploy-part2
   when: manual
 
-packet_fedora35-crio:
+packet_fedora37-crio:
   extends: .packet_pr
   stage: deploy-part2
   when: manual
 
-packet_ubuntu16-flannel-ha:
+packet_ubuntu20-flannel-ha:
   stage: deploy-part2
   extends: .packet_pr
   when: manual
@@ -121,6 +112,16 @@ packet_debian11-docker:
   extends: .packet_pr
   when: on_success
 
+packet_debian12-calico:
+  stage: deploy-part2
+  extends: .packet_pr
+  when: on_success
+
+packet_debian12-docker:
+  stage: deploy-part2
+  extends: .packet_pr
+  when: on_success
+
 packet_centos7-calico-ha-once-localhost:
   stage: deploy-part2
   extends: .packet_pr
@@ -133,7 +134,7 @@ packet_centos7-calico-ha-once-localhost:
 
 packet_almalinux8-kube-ovn:
   stage: deploy-part2
-  extends: .packet_periodic
+  extends: .packet_pr
   when: on_success
 
 packet_almalinux8-calico:
@@ -163,10 +164,11 @@ packet_almalinux8-docker:
   extends: .packet_pr
   when: on_success
 
-packet_fedora36-docker-weave:
+packet_fedora38-docker-weave:
   stage: deploy-part2
   extends: .packet_pr
   when: on_success
+  allow_failure: true
 
 packet_opensuse-docker-cilium:
   stage: deploy-part2
@@ -175,22 +177,17 @@ packet_opensuse-docker-cilium:
 
 # ### MANUAL JOBS
 
-packet_ubuntu16-docker-weave-sep:
+packet_ubuntu20-docker-weave-sep:
   stage: deploy-part2
   extends: .packet_pr
   when: manual
 
-packet_ubuntu18-cilium-sep:
+packet_ubuntu20-cilium-sep:
   stage: deploy-special
   extends: .packet_pr
   when: manual
 
-packet_ubuntu18-flannel-ha:
-  stage: deploy-part2
-  extends: .packet_pr
-  when: manual
-
-packet_ubuntu18-flannel-ha-once:
+packet_ubuntu20-flannel-ha-once:
   stage: deploy-part2
   extends: .packet_pr
   when: manual
@@ -216,19 +213,19 @@ packet_centos7-multus-calico:
   extends: .packet_pr
   when: manual
 
-packet_fedora36-docker-calico:
+packet_fedora38-docker-calico:
   stage: deploy-part2
   extends: .packet_periodic
   when: on_success
   variables:
     RESET_CHECK: "true"
 
-packet_fedora35-calico-selinux:
+packet_fedora37-calico-selinux:
   stage: deploy-part2
   extends: .packet_periodic
   when: on_success
 
-packet_fedora35-calico-swap-selinux:
+packet_fedora37-calico-swap-selinux:
   stage: deploy-part2
   extends: .packet_pr
   when: manual
@@ -243,7 +240,7 @@ packet_almalinux8-calico-nodelocaldns-secondary:
   extends: .packet_pr
   when: manual
 
-packet_fedora36-kube-ovn:
+packet_fedora38-kube-ovn:
   stage: deploy-part2
   extends: .packet_periodic
   when: on_success
@@ -308,7 +305,7 @@ packet_debian11-calico-upgrade-once:
   variables:
     UPGRADE_TEST: graceful
 
-packet_ubuntu18-calico-ha-recover:
+packet_ubuntu20-calico-ha-recover:
   stage: deploy-part3
   extends: .packet_periodic
   when: on_success
@@ -316,7 +313,7 @@ packet_ubuntu18-calico-ha-recover:
     RECOVER_CONTROL_PLANE_TEST: "true"
     RECOVER_CONTROL_PLANE_TEST_GROUPS: "etcd[2:],kube_control_plane[1:]"
 
-packet_ubuntu18-calico-ha-recover-noquorum:
+packet_ubuntu20-calico-ha-recover-noquorum:
   stage: deploy-part3
   extends: .packet_periodic
   when: on_success

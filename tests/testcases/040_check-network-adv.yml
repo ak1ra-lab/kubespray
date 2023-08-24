@@ -1,5 +1,6 @@
 ---
-- hosts: kube_node
+- name: Testcases for calico
+  hosts: kube_node
   tasks:
     - name: Test tunl0 routes
       shell: "set -o pipefail && ! /sbin/ip ro | grep '/{{ calico_pool_blocksize }} | default(26) via' | grep -v tunl0"
@@ -7,9 +8,10 @@
         executable: /bin/bash
       when:
         - (calico_ipip_mode is defined and calico_ipip_mode != 'Never' or cloud_provider is defined)
-        - kube_network_plugin|default('calico') == 'calico'
+        - kube_network_plugin | default('calico') == 'calico'
 
-- hosts: k8s_cluster
+- name: Advanced testcases for network
+  hosts: k8s_cluster
   vars:
     agent_report_interval: 10
     netcheck_namespace: default
@@ -26,7 +28,7 @@
         bin_dir: "/usr/local/bin"
       when: not ansible_os_family in ["Flatcar", "Flatcar Container Linux by Kinvolk"]
 
-    - import_role:  # noqa unnamed-task
+    - import_role:  # noqa name[missing]
         name: cluster-dump
 
     - name: Wait for netchecker server
@@ -44,7 +46,7 @@
       args:
         executable: /bin/bash
       register: nca_pod
-      until: nca_pod.stdout_lines|length >= groups['k8s_cluster']|intersect(ansible_play_hosts)|length * 2
+      until: nca_pod.stdout_lines | length >= groups['k8s_cluster'] | intersect(ansible_play_hosts) | length * 2
       retries: 3
       delay: 10
       failed_when: false
@@ -60,7 +62,7 @@
         - netchecker-agent-hostnet
       when: not nca_pod is success
 
-    - debug:  # noqa unnamed-task
+    - debug:  # noqa name[missing]
         var: nca_pod.stdout_lines
       when: inventory_hostname == groups['kube_control_plane'][0]
 
@@ -73,9 +75,9 @@
       register: agents
       retries: 18
       delay: "{{ agent_report_interval }}"
-      until: agents.content|length > 0 and
+      until: agents.content | length > 0 and
         agents.content[0] == '{' and
-        agents.content|from_json|length >= groups['k8s_cluster']|intersect(ansible_play_hosts)|length * 2
+        agents.content | from_json | length >= groups['k8s_cluster'] | intersect(ansible_play_hosts) | length * 2
       failed_when: false
       no_log: false
 
@@ -89,14 +91,14 @@
       register: connectivity_check
       retries: 3
       delay: "{{ agent_report_interval }}"
-      until: connectivity_check.content|length > 0 and
+      until: connectivity_check.content | length > 0 and
         connectivity_check.content[0] == '{'
       no_log: false
       failed_when: false
       when:
         - agents.content != '{}'
 
-    - debug:  # noqa unnamed-task
+    - debug:  # noqa name[missing]
         var: ncs_pod
       run_once: true
 
@@ -130,7 +132,7 @@
         - agents.content is defined
         - agents.content[0] == '{'
 
-    - debug:  # noqa unnamed-task
+    - debug:  # noqa name[missing]
         var: agents_check_result
       delegate_to: "{{ groups['kube_control_plane'][0] }}"
       run_once: true
@@ -147,7 +149,7 @@
         - connectivity_check.content is defined
         - connectivity_check.content[0] == '{'
 
-    - debug:  # noqa unnamed-task
+    - debug:  # noqa name[missing]
         var: connectivity_check_result
       delegate_to: "{{ groups['kube_control_plane'][0] }}"
       run_once: true
@@ -173,6 +175,7 @@
       # heuristics by using the cmd parameter like this:
       shell:
         cmd: |
+          set -o pipefail
           cat <<EOF | {{ bin_dir }}/kubectl create -f -
           apiVersion: "k8s.cni.cncf.io/v1"
           kind: NetworkAttachmentDefinition
@@ -196,9 +199,10 @@
             }
           }'
           EOF
+        executable: /bin/bash
       when:
         - inventory_hostname == groups['kube_control_plane'][0]
-        - kube_network_plugin_multus|default(false)|bool
+        - kube_network_plugin_multus | default(false) | bool
 
     - name: Annotate pod with macvlan network
       # We cannot use only shell: below because Ansible will render the text
@@ -207,6 +211,7 @@
       # heuristics by using the cmd parameter like this:
       shell:
         cmd: |
+          set -o pipefail
           cat <<EOF | {{ bin_dir }}/kubectl create -f -
           apiVersion: v1
           kind: Pod
@@ -220,9 +225,10 @@
               command: ["/bin/bash", "-c", "sleep 2000000000000"]
               image: dougbtv/centos-network
           EOF
+        executable: /bin/bash
       when:
         - inventory_hostname == groups['kube_control_plane'][0]
-        - kube_network_plugin_multus|default(false)|bool
+        - kube_network_plugin_multus | default(false) | bool
 
     - name: Check secondary macvlan interface
       command: "{{ bin_dir }}/kubectl exec samplepod -- ip addr show dev net1"
@@ -232,4 +238,4 @@
       changed_when: false
       when:
         - inventory_hostname == groups['kube_control_plane'][0]
-        - kube_network_plugin_multus|default(false)|bool
+        - kube_network_plugin_multus | default(false) | bool

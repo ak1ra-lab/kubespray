@@ -10,15 +10,15 @@
   delegate_to: "{{ item }}"
   delegate_facts: yes
   when: hostvars[item].ansible_default_ipv4 is not defined
-  loop: "{{ (groups['k8s_cluster']|default([]) + groups['etcd']|default([]) + groups['calico_rr']|default([])) | unique }}"
+  loop: "{{ (groups['k8s_cluster'] | default([]) + groups['etcd'] | default([]) + groups['calico_rr'] | default([])) | unique }}"
   run_once: yes
   tags: always
 
-- name: create fallback_ips_base
+- name: Create fallback_ips_base
   set_fact:
     fallback_ips_base: |
       ---
-      {% for item in (groups['k8s_cluster']|default([]) + groups['etcd']|default([]) + groups['calico_rr']|default([]))|unique %}
+      {% for item in (groups['k8s_cluster'] | default([]) + groups['etcd'] | default([]) + groups['calico_rr'] | default([])) | unique %}
       {% set found = hostvars[item].get('ansible_default_ipv4') %}
       {{ item }}: "{{ found.get('address', '127.0.0.1') }}"
       {% endfor %}
@@ -28,6 +28,6 @@
   become: no
   run_once: yes
 
-- name: set fallback_ips
+- name: Set fallback_ips
   set_fact:
     fallback_ips: "{{ hostvars.localhost.fallback_ips_base | from_yaml }}"

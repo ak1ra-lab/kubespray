@@ -13,10 +13,6 @@
   image: $PIPELINE_IMAGE
   services: []
   before_script:
-    - apt-get update && apt-get install -y python3-pip
-    - update-alternatives --install /usr/bin/python python /usr/bin/python3 10
-    - python -m pip uninstall -y ansible ansible-base ansible-core
-    - python -m pip install -r tests/requirements.txt
     - ./tests/scripts/vagrant_clean.sh
   script:
     - ./tests/scripts/testcases_run.sh
@@ -24,17 +20,12 @@
     - chronic ./tests/scripts/testcases_cleanup.sh
   allow_failure: true
 
-vagrant_ubuntu18-calico-dual-stack:
+vagrant_ubuntu20-calico-dual-stack:
   stage: deploy-part2
   extends: .vagrant
   when: on_success
 
-vagrant_ubuntu18-flannel:
-  stage: deploy-part2
-  extends: .vagrant
-  when: on_success
-
-vagrant_ubuntu18-weave-medium:
+vagrant_ubuntu20-weave-medium:
   stage: deploy-part2
   extends: .vagrant
   when: manual
@@ -50,18 +41,18 @@ vagrant_ubuntu20-flannel-collection:
   extends: .vagrant
   when: on_success
 
-vagrant_ubuntu16-kube-router-sep:
+vagrant_ubuntu20-kube-router-sep:
   stage: deploy-part2
   extends: .vagrant
   when: manual
 
 # Service proxy test fails connectivity testing
-vagrant_ubuntu16-kube-router-svc-proxy:
+vagrant_ubuntu20-kube-router-svc-proxy:
   stage: deploy-part2
   extends: .vagrant
   when: manual
 
-vagrant_fedora35-kube-router:
+vagrant_fedora37-kube-router:
   stage: deploy-part2
   extends: .vagrant
   when: on_success

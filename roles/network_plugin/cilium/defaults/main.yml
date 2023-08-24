@@ -8,7 +8,7 @@ cilium_enable_ipv4: true
 cilium_enable_ipv6: false
 
 # Cilium agent health port
-cilium_agent_health_port: "{%- if cilium_version | regex_replace('v') is version('1.11.6', '>=') -%}9879 {%- else -%} 9876 {%- endif -%}"
+cilium_agent_health_port: "{%- if cilium_version | regex_replace('v') is version('1.11.6', '>=') -%}9879{%- else -%}9876{%- endif -%}"
 
 # Identity allocation mode selects how identities are shared between cilium
 # nodes by setting how they are stored. The options are "crd" or "kvstore".
@@ -290,3 +290,22 @@ cilium_certgen_args:
   hubble-relay-client-cert-validity-duration: 94608000s
   hubble-relay-client-cert-secret-name: hubble-relay-client-certs
   hubble-relay-server-cert-generate: false
+
+# A list of extra rules variables to add to clusterrole for cilium operator, formatted like:
+#   cilium_clusterrole_rules_operator_extra_vars:
+#     - apiGroups:
+#       - '""'
+#       resources:
+#       - pods
+#       verbs:
+#       - delete
+#     - apiGroups:
+#       - '""'
+#       resources:
+#       - nodes
+#       verbs:
+#       - list
+#       - watch
+#       resourceNames:
+#       - toto
+cilium_clusterrole_rules_operator_extra_vars: []

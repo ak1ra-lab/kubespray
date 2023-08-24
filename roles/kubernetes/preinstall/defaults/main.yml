@@ -73,7 +73,7 @@ ping_access_ip: true
 ntp_enabled: false
 # The package to install which provides NTP functionality.
 # The default is ntp for most platforms, or chrony on RHEL/CentOS 7 and later.
-# The ntp_package can be one of ['ntp','chrony']
+# The ntp_package can be one of ['ntp', 'chrony']
 ntp_package: >-
       {% if ansible_os_family == "RedHat" -%}
       chrony
@@ -140,3 +140,13 @@ redhat_os_family_extensions:
 # Extending some distributions into the debian os family
 debian_os_family_extensions:
   - "UnionTech OS Server 20"
+
+# Sets DNSStubListener=no, useful if you get "0.0.0.0:53: bind: address already in use"
+systemd_resolved_disable_stub_listener: "{{ ansible_os_family in ['Flatcar', 'Flatcar Container Linux by Kinvolk'] }}"
+
+# Used to disable File Access Policy Daemon service.
+# If service is enabled, the CNI plugin installation will fail
+disable_fapolicyd: true
+
+# Enable 0120-growpart-azure-centos-7 tasks
+growpart_azure_enabled: true
