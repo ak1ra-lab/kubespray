@@ -79,8 +79,11 @@ function download_extra_images() {
 function download_kubespray_source() {
     # offline branch source code archive of kubespray
     wget \
-        --quiet --output-document=${OFFLINE_DIR}/kubespray-offline.tar.gz \
+        --quiet --output-document=/tmp/kubespray-offline.tar.gz \
         --continue https://github.com/ak1ra-lab/kubespray/archive/refs/heads/offline.tar.gz
+
+    tar -xf /tmp/kubespray-offline.tar.gz -C /tmp
+    mv -v /tmp/kubespray-offline ${OFFLINE_DIR}/src
 }
 
 function gen_compose_yaml() {
