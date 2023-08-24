@@ -32,7 +32,15 @@ function bootstrap() {
 
     # 设置 nerdctl 并拉起 nginx 与 registry 容器
     pushd ${kubespray_offline_dir}
-    if ! nerdctl compose -f compose.yaml ps; then
+    if hash nerdctl 2>/dev/null; then
+        # load registry and nginx images
+        for image in $(find resources/nginx/images/ -type f -name '*.tar'); do
+            test -f $image && nerdctl image load -i $image
+        done
+
+        # start registry and nginx containers
+        nerdctl compose -f compose.yaml up -d
+    else
         bash -x setup.sh
     fi
     popd
