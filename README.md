@@ -34,7 +34,7 @@ CONFIG_FILE=inventory/mycluster/hosts.yaml python3 contrib/inventory_builder/inv
 cat inventory/mycluster/group_vars/all/all.yml
 cat inventory/mycluster/group_vars/k8s_cluster/k8s-cluster.yml
 
-# Clean up old Kubernete cluster with Ansible Playbook - run the playbook as root
+# Clean up old Kubernetes cluster with Ansible Playbook - run the playbook as root
 # The option `--become` is required, as for example cleaning up SSL keys in /etc/,
 # uninstalling old packages and interacting with various systemd daemons.
 # Without --become the playbook will fail to run!
@@ -161,10 +161,10 @@ Note: Upstart/SysV init based OS types are not supported.
 ## Supported Components
 
 - Core
-  - [kubernetes](https://github.com/kubernetes/kubernetes) v1.27.4
+  - [kubernetes](https://github.com/kubernetes/kubernetes) v1.27.5
   - [etcd](https://github.com/etcd-io/etcd) v3.5.6
   - [docker](https://www.docker.com/) v20.10 (see note)
-  - [containerd](https://containerd.io/) v1.7.3
+  - [containerd](https://containerd.io/) v1.7.5
   - [cri-o](http://cri-o.io/) v1.27 (experimental: see [CRI-O Note](docs/cri-o.md). Only on fedora, ubuntu and centos based OS)
 - Network Plugin
   - [cni-plugins](https://github.com/containernetworking/plugins) v1.2.0
