@@ -114,7 +114,12 @@ ingress_publish_status_address: ""
 # ingress_nginx_namespace: "ingress-nginx"
 # ingress_nginx_insecure_port: 80
 # ingress_nginx_secure_port: 443
-# ingress_nginx_configmap:
+ingress_nginx_configmap:
+  enable-brotli: "true"
+  enable-real-ip: "true"
+  enable-underscores-in-headers: "true"
+  proxy-body-size: 16m
+  use-forwarded-headers: "true"
 #   map-hash-bucket-size: "128"
 #   ssl-protocols: "TLSv1.2 TLSv1.3"
 # ingress_nginx_configmap_tcp_services:
