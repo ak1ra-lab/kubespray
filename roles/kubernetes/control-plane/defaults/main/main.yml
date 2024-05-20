@@ -15,6 +15,9 @@ kube_apiserver_node_port_range: "30000-32767"
 # ETCD backend for k8s data
 kube_apiserver_storage_backend: etcd3
 
+# The interval of compaction requests. If 0, the compaction request from apiserver is disabled.
+kube_apiserver_etcd_compaction_interval: "5m0s"
+
 # CIS 1.2.26
 # Validate that the service account token
 # in the request is actually present in etcd.
@@ -138,6 +141,8 @@ kube_webhook_token_auth_url_skip_tls_verify: false
 kube_webhook_authorization: false
 kube_webhook_authorization_url_skip_tls_verify: false
 
+# Default podnodeselector
+kube_apiserver_admission_plugins_podnodeselector_default_node_selector: ""
 
 ## Variables for OpenID Connect Configuration https://kubernetes.io/docs/admin/authentication/
 ## To use OpenID you have to deploy additional an OpenID Provider (e.g Dex, Keycloak, ...)
@@ -222,9 +227,11 @@ event_ttl_duration: "1h0m0s"
 ## Automatically renew K8S control plane certificates on first Monday of each month
 auto_renew_certificates: false
 # First Monday of each month
-auto_renew_certificates_systemd_calendar: "{{ 'Mon *-*-1,2,3,4,5,6,7 03:' ~
-  groups['kube_control_plane'].index(inventory_hostname) ~ '0:00' }}"
+auto_renew_certificates_systemd_calendar: "Mon *-*-1,2,3,4,5,6,7 03:00:00"
 # kubeadm renews all the certificates during control plane upgrade.
 # If we have requirement like without renewing certs upgrade the cluster,
 # we can opt out from the default behavior by setting kubeadm_upgrade_auto_cert_renewal to false
 kubeadm_upgrade_auto_cert_renewal: true
+
+# Bash alias of kubectl to interact with Kubernetes cluster much easier
+# kubectl_alias: k

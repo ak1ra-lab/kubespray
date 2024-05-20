@@ -14,7 +14,7 @@ vagrant-validate:
   stage: unit-tests
   tags: [light]
   variables:
-    VAGRANT_VERSION: 2.3.4
+    VAGRANT_VERSION: 2.3.7
   script:
     - ./tests/scripts/vagrant-validate.sh
   except: ['triggers', 'master']
@@ -25,6 +25,14 @@ ansible-lint:
   tags: [light]
   script:
     - ansible-lint -v
+  except: ['triggers', 'master']
+
+jinja-syntax-check:
+  extends: .job
+  stage: unit-tests
+  tags: [light]
+  script:
+    - "find -name '*.j2' -exec tests/scripts/check-templates.py {} +"
   except: ['triggers', 'master']
 
 syntax-check:
