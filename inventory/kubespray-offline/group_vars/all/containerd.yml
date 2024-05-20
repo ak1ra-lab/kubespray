@@ -44,13 +44,6 @@ containerd_registries_mirrors:
         capabilities: ["pull", "resolve"]
         skip_verify: true
 
-# `containerd_registries_mirrors` is ignored for pulling images when `image_command_tool=nerdctl`
-# (the default for `container_manager=containerd`). Use `crictl` instead, it supports
-# `containerd_registries_mirrors` but lacks proper multi-arch support (see
-# [#8375](https://github.com/kubernetes-sigs/kubespray/issues/8375)):
-image_command_tool: crictl
-
-
 # containerd_max_container_log_line_size: -1
 
 # containerd_registry_auth:

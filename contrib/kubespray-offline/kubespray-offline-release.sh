@@ -8,14 +8,15 @@ REGISTRY_ADDR="${REGISTRY_ADDR:-127.0.0.1:5000}"
 
 SCRIPT_DIR=$(dirname "$(readlink -f \"$0\")")
 TEMP_DIR="${SCRIPT_DIR}/temp"
-OFFLINE_DIR="${SCRIPT_DIR}/kubespray-offline"
-RESOURCES_DIR="${OFFLINE_DIR}/resources"
+RESOURCES_DIR="${SCRIPT_DIR}/resources"
+# upstream contrib/offline directory
+UPSTREAM_TEMP_DIR="${SCRIPT_DIR}/../offline/temp"
 
-FILES_LIST=${FILES_LIST:-"${TEMP_DIR}/files.list"}
+FILES_LIST=${FILES_LIST:-"${UPSTREAM_TEMP_DIR}/files.list"}
 FILES_DIR="${RESOURCES_DIR}/nginx/files"
 
 # Docker Registry HTTP API v2
-IMAGES_LIST=${IMAGES_LIST:-"${TEMP_DIR}/images.list"}
+IMAGES_LIST=${IMAGES_LIST:-"${UPSTREAM_TEMP_DIR}/images.list"}
 IMAGES_DIR="${RESOURCES_DIR}/"
 
 # Extra images
@@ -28,7 +29,7 @@ EXTRA_IMAGES_DIR="${RESOURCES_DIR}/nginx/images"
 # download files
 function download_files_list() {
     if [ ! -f "${FILES_LIST}" ]; then
-        echo "${FILES_LIST} should exist, run ./generate_list.sh first."
+        echo "${FILES_LIST} should exist, run contrib/offline/generate_list.sh first."
         exit 1
     fi
 
@@ -41,7 +42,8 @@ function download_files_list() {
     fi
 
     echo "==== download_files_list ===="
-    cat "${FILES_LIST}" && cp -v "${FILES_LIST}" "${RESOURCES_DIR}"
+    cat "${FILES_LIST}"
+    cp -v "${FILES_LIST}" "${RESOURCES_DIR}"
     wget \
         --quiet --continue --force-directories \
         --directory-prefix="${FILES_DIR}" --input-file="${FILES_LIST}"
@@ -49,14 +51,15 @@ function download_files_list() {
 
 function download_images_list() {
     if [ ! -f "${IMAGES_LIST}" ]; then
-        echo "${IMAGES_LIST} should exist, run ./generate_list.sh first."
+        echo "${IMAGES_LIST} should exist, run contrib/offline/generate_list.sh first."
         exit 1
     fi
 
     test -d "${IMAGES_DIR}" || mkdir -p "${IMAGES_DIR}"
 
     echo "==== download_images_list ===="
-    cat "${IMAGES_LIST}" && cp -v "${IMAGES_LIST}" "${RESOURCES_DIR}"
+    cat "${IMAGES_LIST}"
+    cp -v "${IMAGES_LIST}" "${RESOURCES_DIR}"
     for image in $(cat ${IMAGES_LIST}); do
         echo "skopeo copy docker://${image} docker://${REGISTRY_ADDR}/${image}"
         skopeo --override-arch=${ARCH} --override-os=linux \
@@ -80,14 +83,14 @@ function download_kubespray_source() {
     # offline branch source code archive of kubespray
     wget \
         --quiet --output-document=/tmp/kubespray-offline.tar.gz \
-        --continue https://github.com/ak1ra-lab/kubespray/archive/refs/heads/offline.tar.gz
+        --continue https://github.com/ak1ra-lab/kubespray/archive/refs/heads/kubespray-offline.tar.gz
 
     tar -xf /tmp/kubespray-offline.tar.gz -C /tmp
-    mv -v /tmp/kubespray-offline ${OFFLINE_DIR}/src
+    mv -v /tmp/kubespray-offline ${RESOURCES_DIR}/src
 }
 
 function gen_compose_yaml() {
-    cat >${OFFLINE_DIR}/compose.yaml <<EOF
+    cat >${RESOURCES_DIR}/compose.yaml <<EOF
 ---
 version: '3'
 services:

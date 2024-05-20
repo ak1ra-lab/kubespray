@@ -13,7 +13,7 @@ jobs:
         arch: [amd64, arm64]
       fail-fast: false
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     env:
       ARCH: ${{ matrix.arch }}
       REGISTRY_NAME: registry
@@ -42,27 +42,28 @@ jobs:
       - name: Generate files.list and images.list
         shell: bash
         run: |
-          cd contrib/offline && ./generate_list.sh -e host_architecture=${ARCH} && cd ../../
+          cd contrib/offline && ./generate_list.sh -e host_architecture=${ARCH} && cd -
 
       - name: Download offline files and images
         shell: bash
         run: |
-          cd contrib/offline && ./download-offline-files.sh && cd ../../
+          cd contrib/kubespray-offline && ./kubespray-offline-release.sh && cd -
 
       - name: Make archive for downloaded resources
         shell: bash
         run: |
-          cd contrib/offline
-          tar -czf "../../${KUBESPRAY_OFFLINE_ARCHIVE}" kubespray-offline/
-          cd ../../
+          cd contrib/
+          tar -czf "../${KUBESPRAY_OFFLINE_ARCHIVE}" kubespray-offline/
+          rm -rf kubespray-offline/resources/
+          cd -
 
           sha256sum "${KUBESPRAY_OFFLINE_ARCHIVE}" | tee "${KUBESPRAY_OFFLINE_ARCHIVE}.sha256"
 
           # Each file included in a release must be under 2 GB.
           # There is no limit on the total size of a release, nor bandwidth usage.
           if [ "$(stat --format=%s ${KUBESPRAY_OFFLINE_ARCHIVE})" -ge 2000000000 ]; then
-            split --numeric-suffixes=1 --bytes=1G "${KUBESPRAY_OFFLINE_ARCHIVE}" "${KUBESPRAY_OFFLINE_ARCHIVE}."
-            rm -f "${OFFLINE_FILES_ARCHIVE}"
+            split --numeric-suffixes=1 --bytes=1GiB "${KUBESPRAY_OFFLINE_ARCHIVE}" "${KUBESPRAY_OFFLINE_ARCHIVE}."
+            rm -vf "${KUBESPRAY_OFFLINE_ARCHIVE}"
           fi
 
       - name: Upload files to GitHub release

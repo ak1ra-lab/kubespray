@@ -1,5 +1,5 @@
 
-# [kubespray/contrib/offline/kubespray-offline at offline · ak1ra-lab/kubespray](https://github.com/ak1ra-lab/kubespray/tree/offline/contrib/offline/kubespray-offline)
+# [kubespray/contrib/kubespray-offline at kubespray-offline · ak1ra-lab/kubespray](https://github.com/ak1ra-lab/kubespray/tree/kubespray-offline/contrib/kubespray-offline)
 
 ## Overview
 
@@ -9,17 +9,17 @@
 
 项目相关文件如下,
 
-* `.github/workflows/release.yaml`
+* `.github/workflows/kubespray-offline-release.yaml`
     * GitHub Actions workflows
-* `contrib/offline/download-offline-files.sh`
-    * 这个脚本由 `.github/workflows/release.yaml` 所调用, 不直接由用户使用
+* `contrib/kubespray-offline/kubespray-offline-release.sh`
+    * 这个脚本由 `.github/workflows/kubespray-offline-release.yaml` 所调用, 不直接由用户使用
     * 脚本首先执行 `contrib/offline/generate_list.sh` 脚本生成 `temp/files.list` 与 `temp/images.list`
     * 如果想手动执行这个脚本, 执行前必须有一个已经运行的 `docker.io/library/registry:2` 容器
-* `contirb/offline/kubespray-offline`
+* `contirb/kubespray-offline`
     * 即本 README.md 所在目录
-    * `contrib/offline/download-offline-files.sh` 执行后
+    * `contrib/kubespray-offline/kubespray-offline-release.sh` 执行后
         * 会创建 `resources/registry`, `resources/nginx` 目录, 包含下载的文件
-        * 会下载 [ak1ra-lab/kubespray fork 项目的 offline 分支](https://github.com/ak1ra-lab/kubespray/tree/offline)的代码, 并以 `src/` 目录存在于打包后的离线安装包中
+        * 会下载 [ak1ra-lab/kubespray fork 项目的 kubespray-offline 分支](https://github.com/ak1ra-lab/kubespray/tree/kubespray-offline)的代码, 并以 `src/` 目录存在于打包后的离线安装包中
     * 打包后包含 `compose.yaml`, `nginx.conf`, `setup.sh` 等文件
 
 打包后离线安装包的目录结构为,
@@ -60,16 +60,16 @@ kubespray-offline
     * 使用 `nerdctl image load` 导入 nginx 与 registry 镜像
     * 使用 `nerdctl compose -f compose.yaml up -d` 启动 nginx 与 registry 服务
 * 切换到 kubespray 源代码目录, 设置 Python venv 环境, 并 Python 相关依赖
-* 对于这台 kubespray node, 可以把 [inventory/offline/group_vars/all/offline.yml](https://github.com/ak1ra-lab/kubespray/blob/offline/inventory/offline/group_vars/all/offline.yml) 中的 `registry_host` 和 `files_repo` 项修改为本机 IP
+* 对于这台 kubespray node, 可以把 [inventory/kubespray-offline/group_vars/all/offline.yml](https://github.com/ak1ra-lab/kubespray/blob/kubespray-offline/inventory/kubespray-offline/group_vars/all/offline.yml) 中的 `registry_host` 和 `files_repo` 项修改为本机 IP
 
 一般来说, 离线安装包只需要配置一次.
 
-后续如有新安装集群需求, 只需要复制 [inventory/offline](https://github.com/ak1ra-lab/kubespray/tree/offline/inventory/offline) 目录作为基础 inventory 目录, 不需要重复执行设置 kubespray node.
+后续如有新安装集群需求, 只需要复制 [inventory/offline](https://github.com/ak1ra-lab/kubespray/tree/kubespray-offline/inventory/kubespray-offline) 目录作为基础 inventory 目录, 不需要重复执行设置 kubespray node.
 
-本目录下的 [bootstrap.sh](https://github.com/ak1ra-lab/kubespray/blob/offline/contrib/offline/kubespray-offline/bootstrap.sh) 脚本描述了上述流程, 可以直接使用, 如:
+本目录下的 [bootstrap.sh](https://github.com/ak1ra-lab/kubespray/blob/kubespray-offline/contrib/kubespray-offline/bootstrap.sh) 脚本描述了上述流程, 可以直接使用, 如:
 
 ```shell
-wget -c https://raw.githubusercontent.com/ak1ra-lab/kubespray/offline/contrib/offline/kubespray-offline/bootstrap.sh
+wget -c https://raw.githubusercontent.com/ak1ra-lab/kubespray/kubespray-offline/contrib/kubespray-offline/bootstrap.sh
 bash -x bootstrap.sh
 ```
 
@@ -89,7 +89,7 @@ bash -x bootstrap.sh
 以新创建单节点集群 `k8s-alpha` 为例, 待安装节点为 `172.16.4.31`,
 
 ```shell
-cp -r inventory/offline inventory/k8s-alpha
+cp -r inventory/kubespray-offline inventory/k8s-alpha
 
 export CONFIG_FILE=inventory/k8s-alpha/hosts.yaml
 python3 contrib/inventory_builder/inventory.py k8s-alpha-node01,172.16.4.31
