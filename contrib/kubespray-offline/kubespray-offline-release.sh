@@ -2,32 +2,7 @@
 # This script is used by GitHub Actions
 # Before running this script, you should have a running registry:2 container
 
-set -x
-
-arch="${arch:-amd64}"
-kubespray_offline_archive="${kubespray_offline_archive:-kubespray-offline.tar.gz}"
-
-registry_name="${registry_name:-registry}"
-registry_addr="${registry_addr:-127.0.0.1:5000}"
-
-script_dir="$(dirname "$(readlink -f "$0")")"
-resources_dir="${script_dir}/resources"
-# upstream contrib/offline directory
-upstream_temp_dir="${script_dir}/../offline/temp"
-
-files_list="${files_list:-"${upstream_temp_dir}/files.list"}"
-files_dir="${resources_dir}/nginx/files"
-
-# docker registry http api v2
-images_list="${images_list:-"${upstream_temp_dir}/images.list"}"
-images_dir="${resources_dir}"
-
-# extra images
-extra_nginx_version="${extra_nginx_version:-1.25}"
-extra_registry_version="${extra_registry_version:-2.8}"
-extra_nginx_image="docker.io/library/nginx:${extra_nginx_version}"
-extra_registry_image="docker.io/library/registry:${extra_registry_version}"
-extra_images_dir="${resources_dir}/nginx/images"
+set -ex -o pipefail
 
 # download files
 download_files_list() {
@@ -36,15 +11,13 @@ download_files_list() {
         exit 1
     fi
 
-    test -d "${files_dir}" || mkdir -p "${files_dir}"
-
     # append nerdctl-full-*.tar.gz
-    nerdctl_full_url="$(grep 'containerd/nerdctl' | sed 's/nerdctl-/nerdctl-full-/')"
+    nerdctl_full_url="$(grep 'containerd/nerdctl' "${files_list}" | sed 's/nerdctl-/nerdctl-full-/')"
     echo "${nerdctl_full_url}" >>"${files_list}"
 
+    test -d "${files_dir}" || mkdir -p "${files_dir}"
     echo "==== download_files_list ===="
-    cp -v "${files_list}" "${resources_dir}"
-    cat "${files_list}"
+    tee "${resources_dir}/files.list" <"${files_list}"
     wget \
         --quiet --continue --force-directories \
         --directory-prefix="${files_dir}" --input-file="${files_list}"
@@ -57,11 +30,11 @@ download_images_list() {
     fi
 
     test -d "${images_dir}" || mkdir -p "${images_dir}"
-
     echo "==== download_images_list ===="
-    cp -v "${images_list}" "${resources_dir}"
-    cat "${images_list}"
-    mapfile -t images < <(cat "${images_list}")
+    tee "${resources_dir}/images.list" <"${images_list}"
+    # registry:2 raise level=fatal error msg when writing manifest (Image manifest version 2, schema 1)
+    mapfile -t images < <(sed -r '/quay\.io\/external_storage\/(cephfs|rbd)-provisioner/d' "${images_list}")
+    # mapfile -t images < <(cat "${images_list}")
     for image in "${images[@]}"; do
         echo "skopeo copy docker://${image} docker://${registry_addr}/${image}"
         skopeo --command-timeout=60s --override-arch="${arch}" --override-os=linux \
@@ -78,23 +51,24 @@ download_images_list() {
 
 download_extra_images() {
     test -d "${extra_images_dir}" || mkdir -p "${extra_images_dir}"
-
     skopeo copy "docker://${extra_nginx_image}" "docker-archive:${extra_images_dir}/nginx.tar:${extra_nginx_image}"
     skopeo copy "docker://${extra_registry_image}" "docker-archive:${extra_images_dir}/registry.tar:${extra_registry_image}"
 }
 
 download_kubespray_source() {
-    # kubespray-offline branch source code archive of kubespray
-    wget \
-        --quiet --output-document=/tmp/src.tar.gz \
-        --continue https://github.com/ak1ra-lab/kubespray/archive/refs/heads/kubespray-offline.tar.gz
+    # use `git fetch --unshallow` to fetch all history commits
+    git clone --depth 1 https://github.com/ak1ra-lab/kubespray.git "${working_dir}/src"
+    cd "${working_dir}/src" || return
+    git switch "${kubespray_branch}"
 
-    tar -xf /tmp/src.tar.gz -C /tmp
-    mv -v /tmp/kubespray-kubespray-offline "${resources_dir}/src"
+    # test -d venv || python3 -m venv venv
+    # # shellcheck disable=SC1091
+    # . venv/bin/activate
+    # python3 -m pip install -r requirements.txt
 }
 
 gen_compose_yaml() {
-    cat >"${script_dir}/compose.yaml" <<EOF
+    cat >"${working_dir}/compose.yaml" <<EOF
 ---
 version: '3'
 services:
@@ -120,24 +94,58 @@ EOF
 }
 
 make_archive_and_split() {
-    tar -czf "../../${kubespray_offline_archive}" ./
-    rm -rf "${resources_dir}"
+    cd "${working_dir}" || return
 
-    cd ../../ || return
-    sha256sum "${kubespray_offline_archive}" | tee "${kubespray_offline_archive}.sha256"
+    tar -czf "${kubespray_archive_dir}/${kubespray_archive}" .
+
+    cd "${kubespray_archive_dir}" || return
+    sha256sum "${kubespray_archive}" | tee "${kubespray_archive}.sha256"
 
     # Each file included in a release must be under 2 GB.
     # There is no limit on the total size of a release, nor bandwidth usage.
-    if [ "$(stat --format=%s "${kubespray_offline_archive}")" -ge 2000000000 ]; then
-        split --numeric-suffixes=1 --bytes=1GiB "${kubespray_offline_archive}" "${kubespray_offline_archive}."
-        rm -vf "${kubespray_offline_archive}"
+    if [ "$(stat --format=%s "${kubespray_archive}")" -ge 2000000000 ]; then
+        split --numeric-suffixes=1 --bytes=1GiB "${kubespray_archive}" "${kubespray_archive}."
+        rm -f "${kubespray_archive}"
     fi
-    cd - || return
 }
 
-download_files_list
-download_images_list
-download_extra_images
-download_kubespray_source
-gen_compose_yaml
-make_archive_and_split
+main() {
+    script_dir="$(dirname "$(readlink -f "$0")")"
+    # contrib/offline/generate_list.sh
+    offline_temp_dir="${script_dir}/../offline/temp"
+
+    arch="${arch:-amd64}"
+    registry_name="${registry_name:-registry}"
+    registry_addr="${registry_addr:-127.0.0.1:5000}"
+
+    kubespray_branch="${kubespray_branch:-kubespray-offline}"
+    kubespray_archive="${kubespray_archive:-kubespray-offline.tar.gz}"
+    kubespray_archive_dir="${kubespray_archive_dir:-/tmp}"
+
+    working_dir="${working_dir:-${script_dir}}"
+    resources_dir="${working_dir}/resources"
+    test -d "${resources_dir}" || mkdir -p "${resources_dir}"
+
+    files_list="${files_list:-"${offline_temp_dir}/files.list"}"
+    files_dir="${resources_dir}/nginx/files"
+
+    # docker registry http api v2
+    images_list="${images_list:-"${offline_temp_dir}/images.list"}"
+    images_dir="${resources_dir}"
+
+    # extra images
+    extra_nginx_version="${extra_nginx_version:-1.25}"
+    extra_registry_version="${extra_registry_version:-2}"
+    extra_nginx_image="docker.io/library/nginx:${extra_nginx_version}"
+    extra_registry_image="docker.io/library/registry:${extra_registry_version}"
+    extra_images_dir="${resources_dir}/nginx/images"
+
+    download_files_list
+    download_images_list
+    download_extra_images
+    download_kubespray_source
+    gen_compose_yaml
+    make_archive_and_split
+}
+
+main "$@"

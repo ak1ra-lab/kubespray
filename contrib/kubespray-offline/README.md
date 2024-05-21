@@ -19,21 +19,23 @@
     * 即本 README.md 所在目录
     * `contrib/kubespray-offline/kubespray-offline-release.sh` 执行后
         * 会创建 `resources/registry`, `resources/nginx` 目录, 包含下载的文件
-        * 会下载 [ak1ra-lab/kubespray fork 项目的 kubespray-offline 分支](https://github.com/ak1ra-lab/kubespray/tree/kubespray-offline)的代码, 并以 `src/` 目录存在于打包后的离线安装包中
+        * 会克隆 [ak1ra-lab/kubespray](https://github.com/ak1ra-lab/kubespray/tree/kubespray-offline) 的代码, 存放在 `src/` 目录下
     * 打包后包含 `compose.yaml`, `nginx.conf`, `setup.sh` 等文件
 
 打包后离线安装包的目录结构为,
 
 ```
-kubespray-offline
-  bootstrap.sh                ->    bootstrap script to setup kubespray deploy node
-  setup.sh                    ->    helper script to setup and start nginx, registry containers
-  src/                        ->    ak1ra-lab/kubespray offline branch source code
-  resources/
-    registry/                 ->    downloaded images from temp/images.list in registry:2 format
-    nginx/files/              ->    downloaded files from temp/files.list
-    nginx/images/             ->    extra images in docker-archive format
-    nginx.conf                ->    nginx.conf for files server
+src/                        ->    source code of repo ak1ra-lab/kubespray
+bootstrap.sh                ->    bootstrap script to setup kubespray deploy node
+setup.sh                    ->    helper script to setup and start nginx, registry containers
+nginx.conf                  ->    nginx.conf for files server
+compose.yaml                ->    start nginx and registry containers
+resources/
+  registry/                 ->    downloaded images from temp/images.list in registry:2 format
+  nginx/files/              ->    downloaded files from temp/files.list
+  nginx/images/             ->    extra images in docker-archive format
+  images.list               ->    copy of temp/images.list
+  files.list                ->    copy of temp/files.list
 ```
 
 ## "半离线化"使用 kubespray 部署 Kubernetes 集群
@@ -64,7 +66,7 @@ kubespray-offline
 
 一般来说, 离线安装包只需要配置一次.
 
-后续如有新安装集群需求, 只需要复制 [inventory/offline](https://github.com/ak1ra-lab/kubespray/tree/kubespray-offline/inventory/kubespray-offline) 目录作为基础 inventory 目录, 不需要重复执行设置 kubespray node.
+后续如有新安装集群需求, 只需要复制 [inventory/kubespray-offline](https://github.com/ak1ra-lab/kubespray/tree/kubespray-offline/inventory/kubespray-offline) 目录作为基础 inventory 目录, 不需要重复执行设置 kubespray node.
 
 本目录下的 [bootstrap.sh](https://github.com/ak1ra-lab/kubespray/blob/kubespray-offline/contrib/kubespray-offline/bootstrap.sh) 脚本描述了上述流程, 可以直接使用, 如:
 

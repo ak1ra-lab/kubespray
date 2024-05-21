@@ -10,57 +10,59 @@ jobs:
     strategy:
       matrix:
         # Include amd64 and arm64 on linux platform.
-        arch: [amd64, arm64]
+        arch:
+        - amd64
       fail-fast: false
 
     runs-on: ubuntu-latest
     env:
+      arch: ${{ matrix.arch }}
       registry_name: registry
       registry_addr: 127.0.0.1:5000
-      arch: ${{ matrix.arch }}
-      github_ref_name: ${{ github.ref_name }}
-      kubespray_offline_archive: kubespray-offline-${{ github.ref_name }}-${{ matrix.arch }}.tar.gz
+      kubespray_branch: kubespray-offline
+      kubespray_archive: kubespray-offline-${{ github.ref_name }}-${{ matrix.arch }}.tar.gz
+      kubespray_archive_dir: /tmp
 
     services:
       registry:
         image: "docker.io/library/registry:2"
         ports:
-          - "127.0.0.1:5000:5000"
+        - "127.0.0.1:5000:5000"
         options: --name registry
 
     steps:
-      - name: Checkout codebase
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    - name: Checkout codebase
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-      - name: Generate files.list and images.list
-        shell: bash
-        run: |
-          cd contrib/offline && ./generate_list.sh -e host_architecture=${arch} && cd ../../
+    - name: Generate files.list and images.list
+      shell: bash
+      run: |
+        cd contrib/offline && ./generate_list.sh -e host_architecture=${arch} && cd ../../
 
-      - name: Cache contrib/kubespray-offline/resources
-        id: cache-resources
-        uses: actions/cache@v4
-        with:
-          path: contrib/kubespray-offline/resources
-          key: ${{ runner.os }}-resources
+    - name: Cache contrib/kubespray-offline/resources
+      id: cache-resources
+      uses: actions/cache@v4
+      with:
+        path: contrib/kubespray-offline/resources
+        key: ${{ runner.os }}-resources
 
-      - name: Execute kubespray-offline-release.sh
-        if: steps.cache-resources.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          cd contrib/kubespray-offline && ./kubespray-offline-release.sh && cd ../../
+    - name: Execute kubespray-offline-release.sh
+      if: steps.cache-resources.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        cd contrib/kubespray-offline && ./kubespray-offline-release.sh && cd ../../
 
-      - name: Upload files to GitHub release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file_glob: true
-          file: ${{ env.kubespray_offline_archive }}.*
+    - name: Upload files to GitHub release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file_glob: true
+        file: ${{ env.kubespray_archive_dir }}/${{ env.kubespray_archive }}.*

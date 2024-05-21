@@ -1,15 +1,14 @@
 #!/bin/bash
 # helper script to setup and start nginx, registry containers
+set -e -o pipefail
 
-set -ex
-
-setup_nerdctl() {
+main() {
     # install nerdctl-full-*
     tar -xf "$(find . -type f -name 'nerdctl-full-*.tar.gz' | sort -r --version-sort | head -n1)" -C /usr/local
 
     # start and enable buildkit
     systemctl enable buildkit.service containerd.service
-    systemctl restart buildkit.service containerd.service
+    systemctl start buildkit.service containerd.service
 
     # load registry and nginx images
     find resources/nginx/images/ -type f -name '*.tar' -print0 | while IFS= read -r -d '' image; do
@@ -20,4 +19,4 @@ setup_nerdctl() {
     nerdctl compose -f compose.yaml up -d
 }
 
-setup_nerdctl "$@"
+main "$@"
