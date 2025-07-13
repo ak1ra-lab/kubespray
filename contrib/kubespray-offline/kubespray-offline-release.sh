@@ -55,18 +55,6 @@ download_extra_images() {
     skopeo copy "docker://${extra_registry_image}" "docker-archive:${extra_images_dir}/registry.tar:${extra_registry_image}"
 }
 
-download_kubespray_source() {
-    # use `git fetch --unshallow` to fetch all history commits
-    git clone --depth 1 https://github.com/ak1ra-lab/kubespray.git "${working_dir}/src"
-    cd "${working_dir}/src" || return
-    git switch "${kubespray_branch}"
-
-    # test -d venv || python3 -m venv venv
-    # # shellcheck disable=SC1091
-    # . venv/bin/activate
-    # python3 -m pip install -r requirements.txt
-}
-
 gen_compose_yaml() {
     cat >"${working_dir}/compose.yaml" <<EOF
 ---
@@ -118,7 +106,6 @@ main() {
     registry_name="${registry_name:-registry}"
     registry_addr="${registry_addr:-127.0.0.1:5000}"
 
-    kubespray_branch="${kubespray_branch:-kubespray-offline}"
     kubespray_archive="${kubespray_archive:-kubespray-offline.tar.gz}"
     kubespray_archive_dir="${kubespray_archive_dir:-/tmp}"
 
@@ -134,7 +121,7 @@ main() {
     images_dir="${resources_dir}"
 
     # extra images
-    extra_nginx_version="${extra_nginx_version:-1.25}"
+    extra_nginx_version="${extra_nginx_version:-1.29}"
     extra_registry_version="${extra_registry_version:-2}"
     extra_nginx_image="docker.io/library/nginx:${extra_nginx_version}"
     extra_registry_image="docker.io/library/registry:${extra_registry_version}"
@@ -143,7 +130,6 @@ main() {
     download_files_list
     download_images_list
     download_extra_images
-    download_kubespray_source
     gen_compose_yaml
     make_archive_and_split
 }
