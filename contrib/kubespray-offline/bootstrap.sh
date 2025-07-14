@@ -28,40 +28,34 @@ main() {
     fi
 
     # 校验 SHA256
-    sha256sum -c "${kubespray_offline_archive}.sha256"
-    rm -f "${kubespray_offline_archive}".0*
+    if ! sha256sum -c "${kubespray_offline_archive}.sha256"; then
+        exit 1
+    fi
 
     # 解压离线安装包
     tar -xf "${kubespray_offline_archive}" -C "${working_dir}"
 
-    # 设置 nerdctl 并拉起 nginx 与 registry 容器
-    cd "${working_dir}" || return
+    # get runtime command
     if command -v nerdctl >/dev/null 2>&1; then
+        runtime="nerdctl"
+    elif command -v docker >/dev/null 2>&1; then
+        runtime="docker"
+    else
+        echo "No supported container runtime found"
+        exit 1
+    fi
+
+    # 载入 nginx 与 registry 镜像并拉起容器
+    cd "${working_dir}" || return
+    if command -v "${runtime}" >/dev/null 2>&1; then
         # load registry and nginx images
         find resources/nginx/images/ -type f -name '*.tar' -print0 | while IFS= read -r -d '' image; do
-            test -f "${image}" && nerdctl image load -i "${image}"
+            test -f "${image}" && "${runtime}" image load -i "${image}"
         done
 
         # start registry and nginx containers
-        nerdctl compose -f compose.yaml up -d
-    else
-        bash -x setup.sh
+        "${runtime}" compose -f compose.yaml up -d
     fi
-
-    # 设置 Python 3 venv 并安装依赖
-    cd "${working_dir}/src" || return
-    test -d venv || python3 -m venv venv
-    # shellcheck disable=SC1091
-    . venv/bin/activate
-    python3 -m pip install -r requirements.txt
-
-    # 把 inventory/offline/group_vars/all/offline.yml
-    # 中的 `registry_host` 和 `files_repo` 项修改为 kubespray node IP
-    kubespray_node="$(ip route get 1 | awk 'NR==1 {print $(NF-2)}')"
-    sed -i \
-        -e '/^registry_host/s/127.0.0.1/'"${kubespray_node}"'/' \
-        -e '/^files_repo/s/127.0.0.1/'"${kubespray_node}"'/' \
-        inventory/offline/group_vars/all/offline.yml
 }
 
 main "$@"

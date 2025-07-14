@@ -58,7 +58,7 @@ download_extra_images() {
 gen_compose_yaml() {
     cat >"${working_dir}/compose.yaml" <<EOF
 ---
-version: '3'
+
 services:
   nginx:
     image: ${extra_nginx_image}
