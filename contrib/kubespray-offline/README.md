@@ -1,12 +1,10 @@
-# [kubespray/contrib/kubespray-offline at kubespray-offline · ak1ra-lab/kubespray](https://github.com/ak1ra-lab/kubespray/tree/kubespray-offline/contrib/kubespray-offline)
+# README.md for contrib/kubespray-offline
 
 ## Overview
 
-本目录为使用 kubespray "半离线化"部署 Kubernetes 集群方案所需文件.
+本目录适用于在"网络受限"环境下使用 kubespray 部署 Kubernetes 集群, 并不适用于完全离线的环境.
 
-因为没有把操作系统软件源部分也"离线化", 因此称之为"半离线化", 待安装节点并不能全程断网安装. 但是除此之外, 使用 kubespray 过程中所需要的文件和镜像已经全部包含, 缺少的部分只是操作系统软件源, 想要完全"离线化"部署, 可以参考 [k8sli/kubeplay](https://github.com/k8sli/kubeplay) 项目, 本项目正是在这个项目启发下开发, 使用 GitHub Actions 来下载必要的文件.
-
-项目相关文件如下,
+项目关键文件如下 (相对于 git repo 根目录),
 
 - `.github/workflows/kubespray-offline-release.yaml`
   - GitHub Actions workflows
@@ -14,19 +12,11 @@
   - 这个脚本由 `.github/workflows/kubespray-offline-release.yaml` 所调用, 不直接由用户使用
   - 脚本首先执行 `contrib/offline/generate_list.sh` 脚本生成 `temp/files.list` 与 `temp/images.list`
   - 如果想手动执行这个脚本, 执行前必须有一个已经运行的 `docker.io/library/registry:2` 容器
-- `contirb/kubespray-offline`
-  - 即本 README.md 所在目录
-  - `contrib/kubespray-offline/kubespray-offline-release.sh` 执行后
-    - 会创建 `resources/registry`, `resources/nginx` 目录, 包含下载的文件
-    - 会克隆 [ak1ra-lab/kubespray](https://github.com/ak1ra-lab/kubespray/tree/kubespray-offline) 的代码, 存放在 `src/` 目录下
-  - 打包后包含 `compose.yaml`, `nginx.conf`, `setup.sh` 等文件
 
-打包后离线安装包的目录结构为,
+打包后的压缩档目录结构为,
 
 ```
-src/                        ->    source code of repo ak1ra-lab/kubespray
 bootstrap.sh                ->    bootstrap script to setup kubespray deploy node
-setup.sh                    ->    helper script to setup and start nginx, registry containers
 nginx.conf                  ->    nginx.conf for files server
 compose.yaml                ->    start nginx and registry containers
 resources/
@@ -37,65 +27,78 @@ resources/
   files.list                ->    copy of temp/files.list
 ```
 
-## "半离线化"使用 kubespray 部署 Kubernetes 集群
+## Git branching
 
-### 设置 kubespray node
+本项目基于 kubespray 上游的 release-xxx 分支 rebase 开辟了多个分支, 以 upstream/release-2.28 为例,
 
-准备一台 服务器/虚拟机, 用作 kubespray node, 推荐使用 Debian 12 (bookworm),
+- offline-2.28/contrib 用于追踪 `contrib/kubespray-offline` 目录下的修改
+- offline-2.28/inventory 用于追踪 `inventory/kubespray-offline` 目录下文件的修改
+  - `inventory/kubespray-offline` 基于 `inventory/sample` 创建, 针对 offline 环境做了一些适配
+  - 其中存在一些可能并不适用于您的环境的修改, 请批判性使用
 
-- 使用系统包管理器安装 `python3 python3-pip python3-venv jq`
-- 这台服务器会用作 kubespray node 也即 Ansible controller node, 用于安装 Kubernetes 集群
-- 托管离线资源的 nginx 与 registry 容器也会运行在这台服务器上
-  - nginx 容器默认监听 8080 端口, registry 容器默认监听 5000 端口,
-  - 要求这两个端口不能被占用, 因此最好在一台全新的服务器上操作
+二者均基于 upstream/release-2.28 分支 rebase, 因为本项目只相对于上游 release branch 做一些额外的 patch, 并没有本质更改, 因此在部署 Kubernetes 集群时可直接使用上游代码, 不过在创建 inventory 时建议参考本项目 offline-2.28/inventory 分支中 `inventory/kubespray-offline` 目录.
 
-在 [ak1ra-lab/kubespray releases](https://github.com/ak1ra-lab/kubespray/releases) 页面下载离线安装包,
+## Installation
+
+### 设置 nginx 和 registry container
+
+在 [ak1ra-lab/kubespray releases](https://github.com/ak1ra-lab/kubespray/releases) 页面下载压缩档,
 
 - 由于 GitHub Actions 对单文件大小的限制, 离线安装包被做成多个分卷,
-  - 根据待安装集群节点的 CPU 架构下载对应架构的所有分卷, 目前支持 `amd64` 与 `arm64`
+  - 根据待安装集群节点的 CPU 架构下载对应架构的所有分卷, 目前支持 `amd64`
 - 下载好后将所有分卷使用 `cat` 命令合并为一个文件
-- 校验合并后文件的 `sha256sum`, 校验通过后解压离线安装包
-- 切换到解压后的目录, 执行本目录下的 `setup.sh` 脚本,
-  - 会解压安装 `nerdctl-full-*` 至 `/usr/local` 目录
-  - 启动 `buildkit` 与 `containerd` 服务并设置开机启动
-  - 使用 `nerdctl image load` 导入 nginx 与 registry 镜像
-  - 使用 `nerdctl compose -f compose.yaml up -d` 启动 nginx 与 registry 服务
-- 切换到 kubespray 源代码目录, 设置 Python venv 环境, 并 Python 相关依赖
-- 对于这台 kubespray node, 可以把 [inventory/kubespray-offline/group_vars/all/offline.yml](https://github.com/ak1ra-lab/kubespray/blob/kubespray-offline/inventory/kubespray-offline/group_vars/all/offline.yml) 中的 `registry_host` 和 `files_repo` 项修改为本机 IP
+  - `.sha256` 文件中包含合并后的压缩档的 SHA256 checksum, 下载后注意校验文件完整性
+- 将合并后的压缩档解压到某个目录如 `/var/lib/kubespray`
+- 使用其中的 compose.yaml 运行 nginx 和 registry container
 
-一般来说, 离线安装包只需要配置一次.
-
-后续如有新安装集群需求, 只需要复制 [inventory/kubespray-offline](https://github.com/ak1ra-lab/kubespray/tree/kubespray-offline/inventory/kubespray-offline) 目录作为基础 inventory 目录, 不需要重复执行设置 kubespray node.
-
-本目录下的 [bootstrap.sh](https://github.com/ak1ra-lab/kubespray/blob/kubespray-offline/contrib/kubespray-offline/bootstrap.sh) 脚本描述了上述流程, 可以直接使用, 如:
-
-```shell
-wget -c https://raw.githubusercontent.com/ak1ra-lab/kubespray/kubespray-offline/contrib/kubespray-offline/bootstrap.sh
-bash -x bootstrap.sh
-```
+一般来说, nginx 和 registry container 只需要配置一次.
 
 ### 使用 kubespray 安装 Kubernetes 集群
 
-规划好要部署的集群节点, 准备好安装 Kubernetes 的 服务器/虚拟机, 需要在各个节点上添加 kubespray 所在服务器的公钥, 即配置好免密登录.
+除部分细节外, 可直接参考 kubespray docs 完成部署.
 
-以示例 `inventory/offline` 目录为模板, 每次创建新集群都以这个目录为模板, 根据实际需求修改 inventory 中配置, 比较重要的配置有,
+- 准备用于安装 Kubernetes 的节点, 对服务器做必要的初始化, 规划节点角色
+- 配置好 kubespray node 到各个节点的免密登录
+- 以 `inventory/kubespray-offline` 目录为模板创建待部署集群的 inventory vars
+  - `inventory/kubespray-offline` 目录位于本项目 offline-2.28/inventory 的分支
+- 根据规划好的节点角色手动创建 ansible inventory
+  - 如 inventory/awesome-cluster/hosts.yaml
+- 替换 `group_vars/all/offline.yml` 中 `registry_host` 和 `files_repo` 为运行 nginx 和 registry container 的地址
+  - 可以使用任意 container runtime, 如 nerdctl (containerd) 或 docker
+  - kubespray node 可以与 `registry_host` 和 `files_repo` 不在同一台主机
+
+以 `inventory/kubespray-offline` 目录为模板, 根据实际需求修改 inventory 中配置, 比较重要的配置有,
 
 - `group_vars/all/all.yml`
 - `group_vars/all/containerd.yml`
 - `group_vars/all/offline.yml`
 - `group_vars/k8s_cluster/k8s-cluster.yml`
 
-> `inventory/offline` 相对于 kubespray 所提供的 `inventory/sample` 示例配置做了一些额外修改.
-
-以新创建单节点集群 `k8s-alpha` 为例, 待安装节点为 `172.16.4.31`,
+以新创建单节点集群 `awesome-cluster` 为例,
 
 ```shell
-cp -r inventory/kubespray-offline inventory/k8s-alpha
+# 下载 kubespray 代码
+git clone https://github.com/ak1ra-lab/kubespray.git
 
-export CONFIG_FILE=inventory/k8s-alpha/hosts.yaml
-python3 contrib/inventory_builder/inventory.py k8s-alpha-node01,172.16.4.31
+# 切换到包含 inventory/kubespray-offline 目录的分支
+git checkout offline-2.28/inventory
 
-ansible-playbook -i inventory/k8s-alpha/hosts.yaml --become --become-user=root cluster.yml
+# 复制示例 ansible inventory 并做必要自定义
+# 注意替换 `group_vars/all/offline.yml` 中 `registry_host` 和 `files_repo` 为运行 nginx 和 registry container 的地址
+cp -r inventory/kubespray-offline inventory/awesome-cluster
+
+# 手动创建 hosts.yaml 文件
+vim inventory/awesome-cluster/hosts.yaml
+
+# 创建 python3 venv 环境
+python3 -m venv venv
+
+# 激活 venv 并安装依赖
+. venv/bin/activate
+pip3 install -r requirements.txt
+
+# 开始安装集群
+ansible-playbook -i inventory/awesome-cluster/hosts.yaml cluster.yml -v -b
 ```
 
 之后等待集群安装完成即可.
